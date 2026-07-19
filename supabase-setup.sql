@@ -179,6 +179,22 @@ create policy allowlist_read
 
 
 -- ---------------------------------------------------------------------
+-- 5b. HARD DENY ON DELETE
+--     RLS already blocks deletes (no DELETE policy exists, so a delete
+--     matches zero rows). But a delete still returns HTTP 204, which
+--     looks like success and makes the guarantee hard to verify.
+--     Revoking the privilege outright makes it explicit and testable:
+--     an attempted delete now returns a clear permission error.
+-- ---------------------------------------------------------------------
+revoke delete on public.board_state  from anon, authenticated;
+revoke delete on public.activity_log from anon, authenticated;
+revoke delete on public.allowlist    from anon, authenticated;
+
+-- The allowlist is managed here in the SQL editor only — never from a browser.
+revoke insert, update on public.allowlist from anon, authenticated;
+
+
+-- ---------------------------------------------------------------------
 -- 6. REALTIME — push changes to every open browser instantly
 -- ---------------------------------------------------------------------
 do $$

@@ -130,6 +130,36 @@ select:focus,input:focus,textarea:focus{border-color:var(--blue)}
 .deliv{color:var(--green);font-weight:600}
 .note-in{width:100%;margin-top:7px;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;display:none}
 .task.open .note-in{display:block}
+
+/* ---------- add / remove tasks ---------- */
+.pill.cust{background:#EDE9FE;color:#6D28D9}
+.addbtn{margin-left:10px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.26);
+  padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.addbtn:hover{background:rgba(255,255,255,.28)}
+.chip.add{border-color:#A5B4FC;color:var(--blue);font-weight:700}
+.chip.add:hover{background:#EEF2FF}
+.rmbtn{background:none;border:none;color:var(--faint);font-size:17px;line-height:1;cursor:pointer;
+  padding:0 3px;font-family:inherit;align-self:flex-start;margin-top:1px;flex-shrink:0}
+.rmbtn:hover{color:var(--red)}
+.rsbtn{background:#EEF2F6;border:1px solid var(--line);color:var(--blue);font-size:11.5px;font-weight:700;
+  padding:4px 11px;border-radius:6px;cursor:pointer;font-family:inherit;align-self:center;flex-shrink:0}
+.rsbtn:hover{background:#E0E7FF}
+
+.addform{border:1px solid #BFDBFE;border-top:none;background:#F8FBFF;padding:14px 15px}
+.af-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.af-f{display:flex;flex-direction:column;gap:4px}
+.af-f.af-wide{grid-column:1/-1}
+.af-f label{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.af-f input,.af-f select{padding:7px 9px;font-size:13px}
+.af-act{display:flex;align-items:center;gap:9px;margin-top:12px}
+.btn-add{background:var(--blue);color:#fff;border:none;padding:8px 17px;border-radius:7px;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-add:hover{background:#1D4ED8}
+.btn-cancel{background:none;border:1px solid var(--line);color:var(--muted);padding:8px 15px;
+  border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-cancel:hover{background:#F1F4F7}
+.af-hint{font-size:11px;color:var(--faint);margin-left:auto}
+@media(max-width:700px){ .af-grid{grid-template-columns:1fr} }
 .notebtn{background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;padding:0 3px;font-family:inherit}
 .notebtn:hover{color:var(--blue)}
 .notebtn.has{color:var(--amber)}
@@ -303,6 +333,8 @@ const TASKS = [
  {id:'D9-05',d:9,w:'Creative',p:'Medium',t:'Prepare organic launch posts',v:'Organic launch posts'},
  {id:'D9-06',d:9,w:'Offer',p:'High',t:'Collect and approve verified testimonials or pilot evidence',v:'Approved proof'},
  {id:'D9-07',d:9,w:'Creative',p:'Critical',t:'Run final claims, link, size and destination QA on every creative',v:'Creative QA sign-off'},
+ {id:'D9-08',d:9,w:'Web',p:'High',t:'Add approved testimonials to the product page proof section',v:'Testimonials live on product page'},
+ {id:'D9-09',d:9,w:'Offer',p:'Medium',t:'Get written permission to use each testimonial and the person’s name and school',v:'Signed testimonial permissions'},
 
  // Day 10 — Launch
  {id:'D10-01',d:10,w:'Launch',p:'Critical',t:'Send the warm-list launch email straight to the product page',v:'Warm launch sent'},
@@ -314,6 +346,8 @@ const TASKS = [
  {id:'D10-07',d:10,w:'Launch',p:'Critical',t:'Personally contact every qualified school lead',v:'School follow-up log'},
  {id:'D10-08',d:10,w:'Launch',p:'High',t:'Record baseline metrics and create the 7-day optimisation backlog',v:'Baseline + backlog'},
 ];
+
+const WORKSTREAMS = ['Product','Offer','Funnel','Web','CRM','Commerce','Analytics','Creative','Launch'];
 
 const DAYTITLES = {
  1:'Product truth and offer lock', 2:'Packaging and buyer experience', 3:'Build the sample pack',
@@ -449,6 +483,9 @@ let sb = null;            // supabase client
 let me = null;            // {email, name, avatar}
 let canEdit = false;      // signed in AND on the allowlist
 let feed = [];            // recent activity
+let customTasks = [];     // user-added tasks
+let showRemoved = false;  // reveal hidden/archived tasks
+let addingTo = null;      // day number while the add form is open
 let connState = CLOUD ? 'connecting' : 'local';
 
 function blank(){
@@ -506,7 +543,7 @@ function byLine(o){
    SUPABASE — connect, authenticate, sync
    ===================================================================== */
 async function initCloud(){
-  if(!CLOUD){ paintAuth(); return; }
+  if(!CLOUD){ customTasks = loadLocalCustom(); paintAuth(); render(); return; }
   try{
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -581,7 +618,31 @@ async function pullAll(){
     if(row.kind === 'route')  fresh.routes[row.item_id]  = val;
   }
   S = fresh; save();
+  await pullCustom();
   await pullFeed();
+}
+
+async function pullCustom(){
+  if(!sb){ customTasks = loadLocalCustom(); return; }
+  const { data, error } = await sb.from('custom_tasks').select('*').order('created_at');
+  if(error){
+    // Table not created yet — degrade quietly rather than breaking the board.
+    if(/does not exist|schema cache/i.test(error.message||'')){
+      console.warn('custom_tasks table missing — run patch-custom-tasks.sql');
+      customTasks = []; return;
+    }
+    console.warn('custom pull failed:', error.message); customTasks = []; return;
+  }
+  customTasks = data || [];
+}
+
+/* Local-mode fallback so the feature still works before the DB exists. */
+const CKEY = 'fm_custom_v1';
+function loadLocalCustom(){
+  try{ return JSON.parse(localStorage.getItem(CKEY) || '[]'); }catch(e){ return []; }
+}
+function saveLocalCustom(){
+  try{ localStorage.setItem(CKEY, JSON.stringify(customTasks)); }catch(e){}
 }
 
 async function pullFeed(){
@@ -624,6 +685,13 @@ function subscribe(){
       if(r.kind==='metric') S.metrics[r.item_id] = val;
       if(r.kind==='route')  S.routes[r.item_id]  = val;
       save(); render();
+    })
+    .on('postgres_changes', {event:'*', schema:'public', table:'custom_tasks'}, payload => {
+      const r = payload.new; if(!r) return;
+      if(r.created_by === (me && me.email) && payload.eventType === 'INSERT') return;
+      const i = customTasks.findIndex(c=>c.id===r.id);
+      if(i >= 0) customTasks[i] = r; else customTasks.push(r);
+      render();
     })
     .on('postgres_changes', {event:'INSERT', schema:'public', table:'activity_log'}, payload => {
       if(payload.new){ feed.unshift(payload.new); feed = feed.slice(0,30);
@@ -714,19 +782,41 @@ const tDone = id => !!(S.tasks[id]||{}).done;
 const aDone = id => !!(S.assets[id]||{}).done;
 const pct   = (a,b) => b ? Math.round(a/b*100) : 0;
 
+/* Built-in tasks can be hidden (never destroyed). Custom tasks live in
+   their own table and are archived rather than deleted. Either way the
+   removal is reversible. */
+const isHidden = id => !!(S.tasks[id]||{}).hidden;
+
+/* The single source of truth for "what tasks exist right now". */
+function allTasks(){
+  const built  = TASKS.filter(t => !isHidden(t.id));
+  const custom = customTasks
+    .filter(c => !c.archived)
+    .map(c => ({ id:c.id, d:c.day, w:c.workstream, p:c.priority,
+                 t:c.title, v:c.deliverable || '', custom:true,
+                 addedBy:c.created_by_name }));
+  return built.concat(custom).sort((a,b)=> a.d - b.d || String(a.id).localeCompare(String(b.id)));
+}
+
+function removedCount(){
+  return TASKS.filter(t=>isHidden(t.id)).length
+       + customTasks.filter(c=>c.archived).length;
+}
+
 function stats(){
-  const total = TASKS.length;
-  const done  = TASKS.filter(t=>tDone(t.id)).length;
-  const crit  = TASKS.filter(t=>t.p==='Critical');
+  const list = allTasks();
+  const total = list.length;
+  const done  = list.filter(t=>tDone(t.id)).length;
+  const crit  = list.filter(t=>t.p==='Critical');
   const critDone = crit.filter(t=>tDone(t.id)).length;
   const req   = ASSETS.filter(a=>a[3]===1);
   const reqDone = req.filter(a=>aDone(a[0])).length;
-  const routesReady = ROUTES.filter(r=>S.routes[r.id]==='Ready').length;
+  const routesReady = ROUTES.filter(r=>routeStatus(r.id)==='Ready').length;
   return {total,done,crit:crit.length,critDone,req:req.length,reqDone,routesReady};
 }
 
 function dayStats(d){
-  const ts = TASKS.filter(t=>t.d===d);
+  const ts = allTasks().filter(t=>t.d===d);
   return {n:ts.length, done:ts.filter(t=>tDone(t.id)).length};
 }
 
@@ -843,17 +933,83 @@ function viewDash(){
 /* =====================================================================
    10-DAY PLAN
    ===================================================================== */
+function addFormHTML(day){
+  const wss = WORKSTREAMS;
+  return `<div class="addform">
+    <div class="af-grid">
+      <div class="af-f af-wide">
+        <label>Task</label>
+        <input type="text" id="ct-title" placeholder="What needs to be done?"
+               onkeydown="if(event.key==='Enter')addTask();if(event.key==='Escape')cancelAdd()">
+      </div>
+      <div class="af-f af-wide">
+        <label>Deliverable</label>
+        <input type="text" id="ct-deliv" placeholder="What exists when it's done? (optional)"
+               onkeydown="if(event.key==='Enter')addTask();if(event.key==='Escape')cancelAdd()">
+      </div>
+      <div class="af-f">
+        <label>Day</label>
+        <select id="ct-day">${Object.keys(DAYTITLES).map(d=>`<option value="${d}"${+d===day?' selected':''}>Day ${d}</option>`).join('')}</select>
+      </div>
+      <div class="af-f">
+        <label>Workstream</label>
+        <select id="ct-ws">${wss.map(w=>`<option${w==='Product'?' selected':''}>${w}</option>`).join('')}</select>
+      </div>
+      <div class="af-f">
+        <label>Priority</label>
+        <select id="ct-pri">
+          <option>Medium</option><option>High</option><option>Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="af-act">
+      <button class="btn-add" onclick="addTask()">Add task</button>
+      <button class="btn-cancel" onclick="cancelAdd()">Cancel</button>
+      <span class="af-hint">Enter to add · Esc to cancel</span>
+    </div>
+  </div>`;
+}
+
+function taskRowHTML(t){
+  const st = S.tasks[t.id]||{};
+  const has = st.note && st.note.trim();
+  return `<div class="task ${st.done?'done':''} ${has?'open':''}" id="row-${t.id}">
+    <input type="checkbox" class="cb" ${st.done?'checked':''} ${canWrite()?'':'disabled'}
+           onchange="tog('${t.id}',this.checked)">
+    <div class="body">
+      <div class="tx">${esc(t.t)}${t.custom?' <span class="pill cust">Added</span>':''}</div>
+      <div class="meta">
+        <span class="pill ${t.p==='Critical'?'crit':t.p==='High'?'high':'med'}">${t.p}</span>
+        <span class="ws">${t.w}</span>
+        ${t.v?`<span class="deliv">→ ${esc(t.v)}</span>`:''}
+        <span style="color:var(--faint)">${t.custom?'custom':esc(t.id)}</span>
+        <button class="notebtn ${has?'has':''}" onclick="toggleNote('${t.id}')" title="Notes">✎</button>
+        ${st.done ? byLine(st) : ''}
+        ${t.custom && t.addedBy ? `<span class="by">added by <b>${esc(t.addedBy)}</b></span>` : ''}
+      </div>
+      <textarea class="note-in" rows="2" placeholder="Notes, links, blockers…"
+        ${canWrite()?'':'readonly'}
+        oninput="setNote('${t.id}',this.value)">${esc(st.note||'')}</textarea>
+    </div>
+    ${canWrite()?`<button class="rmbtn" onclick="removeTask('${t.id}')" title="Remove this task">×</button>`:''}
+  </div>`;
+}
+
 function viewPlan(){
   const f = S.filter;
-  const wss = [...new Set(TASKS.map(t=>t.w))];
-  let list = TASKS.filter(t =>
+  const live = allTasks();
+  const wss = WORKSTREAMS;
+
+  let list = live.filter(t =>
     (f.day==='all' || t.d===+f.day) &&
     (f.ws==='all'  || t.w===f.ws) &&
     (!f.hide || !tDone(t.id))
   );
 
   const days = [...new Set(list.map(t=>t.d))].sort((a,b)=>a-b);
-  const groups = days.map(d=>{
+  const shownDays = (f.day!=='all') ? [+f.day] : days;
+
+  const groups = shownDays.map(d=>{
     const ts = list.filter(t=>t.d===d);
     const ds = dayStats(d);
     return `<div class="tgroup">
@@ -861,36 +1017,54 @@ function viewPlan(){
         <div class="dn">DAY ${d}</div>
         <div class="tt">${esc(DAYTITLES[d])}</div>
         <div class="tc">${ds.done}/${ds.n} complete</div>
+        ${canWrite()?`<button class="addbtn" onclick="openAdd(${d})" title="Add a task to Day ${d}">＋ Add</button>`:''}
       </div>
-      ${ts.map(t=>{
-        const st = S.tasks[t.id]||{};
-        const has = st.note && st.note.trim();
-        return `<div class="task ${st.done?'done':''} ${has?'open':''}" id="row-${t.id}">
-          <input type="checkbox" class="cb" ${st.done?'checked':''} ${canWrite()?'':'disabled'}
-                 onchange="tog('${t.id}',this.checked)">
-          <div class="body">
-            <div class="tx">${esc(t.t)}</div>
-            <div class="meta">
-              <span class="pill ${t.p==='Critical'?'crit':t.p==='High'?'high':'med'}">${t.p}</span>
-              <span class="ws">${t.w}</span>
-              <span class="deliv">→ ${esc(t.v)}</span>
-              <span style="color:var(--faint)">${t.id}</span>
-              <button class="notebtn ${has?'has':''}" onclick="toggleNote('${t.id}')" title="Notes">✎</button>
-              ${st.done ? byLine(st) : ''}
-            </div>
-            <textarea class="note-in" rows="2" placeholder="Notes, links, blockers…"
-              ${canWrite()?'':'readonly'}
-              oninput="setNote('${t.id}',this.value)">${esc(st.note||'')}</textarea>
-          </div>
-        </div>`;
-      }).join('')}
+      ${addingTo===d ? addFormHTML(d) : ''}
+      ${ts.length ? ts.map(taskRowHTML).join('')
+        : `<div class="task" style="color:var(--faint);font-size:12.5px">No tasks match the current filters.</div>`}
     </div>`;
   }).join('') || '<div class="card" style="text-align:center;color:var(--faint)">Nothing matches these filters.</div>';
+
+  // Removed items, revealable
+  const hiddenBuilt = TASKS.filter(t=>isHidden(t.id));
+  const archived    = customTasks.filter(c=>c.archived);
+  const nRemoved    = hiddenBuilt.length + archived.length;
+
+  const removedPanel = nRemoved ? `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2 class="sec" style="margin:0">Removed tasks</h2>
+        <span style="font-size:12px;color:var(--muted)">${nRemoved} hidden from the plan</span>
+        <button class="chip ${showRemoved?'on':''}" style="margin-left:auto" onclick="toggleRemoved()">
+          ${showRemoved?'Hide':'Show'} removed
+        </button>
+      </div>
+      ${showRemoved ? `<div style="margin-top:12px">
+        ${hiddenBuilt.map(t=>`
+          <div class="task">
+            <div class="body">
+              <div class="tx" style="color:var(--muted)">${esc(t.t)}</div>
+              <div class="meta"><span class="ws">${t.w}</span><span style="color:var(--faint)">Day ${t.d} · ${t.id}</span></div>
+            </div>
+            ${canWrite()?`<button class="rsbtn" onclick="restoreTask('${t.id}')">Restore</button>`:''}
+          </div>`).join('')}
+        ${archived.map(c=>`
+          <div class="task">
+            <div class="body">
+              <div class="tx" style="color:var(--muted)">${esc(c.title)} <span class="pill cust">Added</span></div>
+              <div class="meta"><span class="ws">${esc(c.workstream)}</span><span style="color:var(--faint)">Day ${c.day}</span></div>
+            </div>
+            ${canWrite()?`<button class="rsbtn" onclick="restoreTask('${c.id}')">Restore</button>`:''}
+          </div>`).join('')}
+      </div>` : ''}
+    </div>` : '';
+
+  const nCustom = customTasks.filter(c=>!c.archived).length;
 
   return `
   <div class="card">
     <h2 class="sec">10-Day Launch Plan</h2>
-    <p class="sub">${TASKS.length} tasks. Do not start a day until the previous day's critical tasks are done.</p>
+    <p class="sub">${live.length} tasks${nCustom?` · ${nCustom} added by your team`:''}. Do not start a day until the previous day's critical tasks are done.</p>
     <div class="filters">
       <select onchange="S.filter.day=this.value;save();render()">
         <option value="all"${f.day==='all'?' selected':''}>All days</option>
@@ -901,10 +1075,13 @@ function viewPlan(){
         ${wss.map(w=>`<option${f.ws===w?' selected':''}>${w}</option>`).join('')}
       </select>
       <button class="chip ${f.hide?'on':''}" onclick="S.filter.hide=!S.filter.hide;save();render()">Hide completed</button>
-      <span style="margin-left:auto;font-size:12px;color:var(--muted)">Showing ${list.length} of ${TASKS.length}</span>
+      ${canWrite()?`<button class="chip add" onclick="openAdd(${f.day==='all'?1:+f.day})">＋ Add task</button>`:''}
+      <span style="margin-left:auto;font-size:12px;color:var(--muted)">Showing ${list.length} of ${live.length}</span>
     </div>
+    ${!canWrite() && CLOUD ? '<div style="font-size:12px;color:var(--muted);margin-top:4px">Sign in with an approved account to add or remove tasks.</div>' : ''}
   </div>
-  ${groups}`;
+  ${groups}
+  ${removedPanel}`;
 }
 
 function tog(id, v){
@@ -912,9 +1089,15 @@ function tog(id, v){
   const prev = S.tasks[id] || {};
   S.tasks[id] = stamp(Object.assign({}, prev, {done:v}));
   save();
-  const t = TASKS.find(x=>x.id===id);
-  push('task', id, {done:v, note:prev.note||''}, t?t.t:id, v?'completed':'reopened');
+  push('task', id, {done:v, note:prev.note||'', hidden:!!prev.hidden}, taskLabel(id), v?'completed':'reopened');
   render();
+}
+
+/* Works for both built-in and custom tasks. */
+function taskLabel(id){
+  const b = TASKS.find(x=>x.id===id); if(b) return b.t;
+  const c = customTasks.find(x=>x.id===id); if(c) return c.title;
+  return id;
 }
 function toggleNote(id){ const el = document.getElementById('row-'+id); if(el) el.classList.toggle('open'); }
 
@@ -926,8 +1109,7 @@ function setNote(id,v){
   save();
   clearTimeout(noteT[id]);
   noteT[id] = setTimeout(()=>{
-    const t = TASKS.find(x=>x.id===id);
-    push('task', id, {done:!!prev.done, note:v}, t?t.t:id, 'updated a note on');
+    push('task', id, {done:!!prev.done, note:v, hidden:!!prev.hidden}, taskLabel(id), 'updated a note on');
   }, 900);
 }
 
@@ -978,6 +1160,116 @@ function viewRoutes(){
     </table>
   </div>`;
 }
+
+/* =====================================================================
+   ADD / REMOVE TASKS
+   Nothing is ever destroyed. Built-in tasks are hidden, custom tasks are
+   archived. "Show removed" brings anything back.
+   ===================================================================== */
+function openAdd(day){
+  if(!guard()) return;
+  addingTo = (addingTo === day) ? null : day;
+  render();
+  if(addingTo){
+    const el = document.getElementById('ct-title');
+    if(el) el.focus();
+  }
+}
+function cancelAdd(){ addingTo = null; render(); }
+
+async function addTask(){
+  if(!guard()) return;
+  const title = (document.getElementById('ct-title')?.value || '').trim();
+  if(!title){ toast('Give the task a name first.'); return; }
+
+  const rec = {
+    id: 'C-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    day: +(document.getElementById('ct-day')?.value || addingTo || 1),
+    workstream: document.getElementById('ct-ws')?.value || 'Product',
+    priority: document.getElementById('ct-pri')?.value || 'Medium',
+    title,
+    deliverable: (document.getElementById('ct-deliv')?.value || '').trim(),
+    archived: false,
+    created_by: me ? me.email : null,
+    created_by_name: me ? me.name : 'You',
+    created_at: new Date().toISOString()
+  };
+
+  customTasks.push(rec);
+  addingTo = null;
+  render();
+
+  if(sb && canEdit){
+    const { error } = await sb.from('custom_tasks').insert(rec);
+    if(error){
+      customTasks = customTasks.filter(c=>c.id!==rec.id);   // roll back
+      render();
+      toast(/does not exist|schema cache/i.test(error.message)
+        ? 'Run patch-custom-tasks.sql first — the table is missing.'
+        : 'Could not save the task.');
+      return;
+    }
+    await sb.from('activity_log').insert({
+      kind:'task', item_id:rec.id, label:rec.title, action:'added',
+      actor_email:me.email, actor_name:me.name
+    });
+  } else {
+    saveLocalCustom();
+  }
+  toast('Task added to Day ' + rec.day + '.');
+}
+
+async function removeTask(id){
+  if(!guard()) return;
+  const custom = customTasks.find(c=>c.id===id);
+
+  if(custom){
+    custom.archived = true; render();
+    if(sb && canEdit){
+      const { error } = await sb.from('custom_tasks')
+        .update({archived:true, updated_at:new Date().toISOString()}).eq('id', id);
+      if(error){ custom.archived = false; render(); toast('Could not remove.'); return; }
+      await sb.from('activity_log').insert({
+        kind:'task', item_id:id, label:custom.title, action:'removed',
+        actor_email:me.email, actor_name:me.name
+      });
+    } else saveLocalCustom();
+  } else {
+    const t = TASKS.find(x=>x.id===id); if(!t) return;
+    const prev = S.tasks[id] || {};
+    S.tasks[id] = stamp(Object.assign({}, prev, {hidden:true}));
+    save(); render();
+    push('task', id, Object.assign({}, prev, {hidden:true}), t.t, 'removed');
+  }
+  toast('Removed. Use “Show removed” to bring it back.');
+}
+
+async function restoreTask(id){
+  if(!guard()) return;
+  const custom = customTasks.find(c=>c.id===id);
+
+  if(custom){
+    custom.archived = false; render();
+    if(sb && canEdit){
+      await sb.from('custom_tasks')
+        .update({archived:false, updated_at:new Date().toISOString()}).eq('id', id);
+      await sb.from('activity_log').insert({
+        kind:'task', item_id:id, label:custom.title, action:'restored',
+        actor_email:me.email, actor_name:me.name
+      });
+    } else saveLocalCustom();
+  } else {
+    const t = TASKS.find(x=>x.id===id); if(!t) return;
+    const prev = S.tasks[id] || {};
+    const next = Object.assign({}, prev); delete next.hidden;
+    S.tasks[id] = stamp(next);
+    save(); render();
+    push('task', id, next, t.t, 'restored');
+  }
+  toast('Restored.');
+}
+
+function toggleRemoved(){ showRemoved = !showRemoved; render(); }
 
 function setRoute(id, v){
   if(!guard()){ render(); return; }
@@ -1189,7 +1481,8 @@ function expJSON(){
 Object.defineProperty(window, 'S', { get: () => S });
 Object.assign(window, {
   go, tog, togA, setM, setNote, toggleNote, setRoute, expJSON,
-  signIn, signOut, save, render
+  signIn, signOut, save, render,
+  openAdd, cancelAdd, addTask, removeTask, restoreTask, toggleRemoved
 });
 
 /* =====================================================================
