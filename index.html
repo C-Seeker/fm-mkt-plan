@@ -1,467 +1,853 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Marketing Plan Matrix Planner</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #111; font-size: 14px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Marks — IB Maths Launch Dashboard</title>
+<style>
+:root{
+  --navy:#1F3A5F; --blue:#2563EB; --green:#15803D; --amber:#B45309; --red:#DC2626;
+  --bg:#F6F8FA; --card:#FFFFFF; --line:#E3E8EF; --text:#1A2331; --muted:#6B7684; --faint:#9AA5B1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
-    header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-    header h1 { font-size: 17px; font-weight: 800; }
-    header span { font-size: 12px; color: #888; }
+/* ---------- header ---------- */
+header{background:var(--navy);color:#fff;padding:16px 26px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+header h1{font-size:17px;font-weight:800;letter-spacing:-.2px}
+header .sub{font-size:12px;color:#A9BDD6}
+header .spacer{flex:1}
+.hbtn{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.22);padding:7px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.hbtn:hover{background:rgba(255,255,255,.22)}
 
-    .tabs { display: flex; gap: 3px; padding: 12px 24px 0; background: #fff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
-    .tab-btn { padding: 9px 15px; border: none; background: none; border-radius: 6px 6px 0 0; cursor: pointer; color: #666; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; transition: all .15s; font-family: inherit; }
-    .tab-btn:hover { background: #f3f4f6; }
-    .tab-btn.active { color: #111; border-bottom-color: #3b82f6; font-weight: 700; }
+/* ---------- tabs ---------- */
+nav{background:var(--card);border-bottom:1px solid var(--line);padding:0 26px;display:flex;gap:2px;position:sticky;top:0;z-index:50;overflow-x:auto}
+.tab{padding:13px 16px;border:none;background:none;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:2.5px solid transparent;white-space:nowrap;font-family:inherit}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
 
-    .content { padding: 24px; max-width: 900px; margin: 0 auto; }
+main{padding:22px 26px 60px;max-width:1320px;margin:0 auto}
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .form-group { display: flex; flex-direction: column; gap: 5px; }
-    .form-group.full { grid-column: 1 / -1; }
-    label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .05em; }
-    input, select { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; color: #111; font-size: 13px; font-family: inherit; outline: none; }
-    input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #3b82f620; }
+/* ---------- generic ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:18px;margin-bottom:16px}
+h2.sec{font-size:16px;font-weight:800;margin-bottom:4px}
+p.sub{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 
-    .slider-row { display: flex; align-items: center; gap: 10px; }
-    input[type=range] { flex: 1; padding: 0; border: none; accent-color: #3b82f6; cursor: pointer; }
-    .slider-val { width: 24px; text-align: center; font-weight: 800; color: #3b82f6; font-size: 15px; }
+/* ---------- KPI ---------- */
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px}
+.kpi .lbl{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.kpi .val{font-size:27px;font-weight:800;line-height:1.1}
+.kpi .note{font-size:11.5px;color:var(--muted);margin-top:3px}
 
-    .btn { padding: 9px 18px; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; }
-    .btn-primary { background: #3b82f6; color: #fff; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-sm { padding: 5px 11px; font-size: 12px; }
-    .btn-ghost { background: #f3f4f6; color: #111; }
-    .btn-ghost:hover { background: #e5e7eb; }
-    .btn-red { background: #fee2e2; color: #dc2626; }
-    .btn-red:hover { background: #fecaca; }
+.gate{border-radius:11px;padding:15px 18px;display:flex;align-items:center;gap:14px;margin-bottom:16px;border:1px solid}
+.gate.no{background:#FEF2F2;border-color:#FCA5A5}
+.gate.yes{background:#F0FDF4;border-color:#86EFAC}
+.gate .icon{font-size:26px}
+.gate .t{font-weight:800;font-size:14.5px}
+.gate .d{font-size:12.5px;color:var(--muted);margin-top:2px}
 
-    .c-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-    .c-card { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border: 1px solid #e5e7eb; border-radius: 9px; background: #fff; }
-    .c-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .c-name { font-weight: 600; flex: 1; font-size: 13px; }
-    .c-meta { font-size: 11px; color: #888; margin-top: 2px; }
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; }
+/* ---------- progress ---------- */
+.bar{background:#EDF1F5;border-radius:99px;height:9px;overflow:hidden;flex:1}
+.bar>span{display:block;height:100%;border-radius:99px;background:var(--blue);transition:width .35s}
+.prow{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.prow .nm{width:118px;font-size:12.5px;font-weight:600;flex-shrink:0}
+.prow .pc{width:52px;text-align:right;font-size:12px;font-weight:700;color:var(--muted)}
 
-    .matrix-wrap { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
-    .matrix-wrap svg { width: 100%; display: block; }
+/* ---------- day strip ---------- */
+.days{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+.day{border:1px solid var(--line);border-radius:9px;padding:9px 5px;text-align:center;cursor:pointer;background:var(--card);transition:.15s}
+.day:hover{border-color:var(--blue)}
+.day .n{font-size:17px;font-weight:800}
+.day .s{font-size:9.5px;color:var(--muted);margin-top:2px}
+.day .mini{height:4px;border-radius:99px;background:#EDF1F5;margin-top:6px;overflow:hidden}
+.day .mini>span{display:block;height:100%;background:var(--green)}
+.day.done{background:#F0FDF4;border-color:#86EFAC}
+.day.active{background:#EFF6FF;border-color:var(--blue)}
 
-    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* ---------- filters ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+select,input[type=text],input[type=number],textarea{padding:7px 10px;border:1px solid var(--line);border-radius:7px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--blue)}
+.chip{padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 
-    .budget-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-    .bc { padding: 15px; border: 1px solid #e5e7eb; border-radius: 9px; background: #fff; }
-    .bc .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 4px; }
-    .bc .val { font-size: 22px; font-weight: 800; }
+/* ---------- task list ---------- */
+.tgroup{margin-bottom:20px}
+.thead{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--navy);color:#fff;border-radius:8px 8px 0 0}
+.thead .dn{background:rgba(255,255,255,.16);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:800}
+.thead .tt{font-weight:700;font-size:13.5px}
+.thead .tc{margin-left:auto;font-size:11.5px;color:#B9CBE0}
+.task{display:flex;gap:11px;padding:11px 13px;border:1px solid var(--line);border-top:none;background:var(--card);align-items:flex-start}
+.task:last-child{border-radius:0 0 8px 8px}
+.task.done{background:#FAFDFB}
+.task.done .tx{text-decoration:line-through;color:var(--faint)}
+.cb{width:17px;height:17px;margin-top:2px;cursor:pointer;accent-color:var(--green);flex-shrink:0}
+.task .body{flex:1;min-width:0}
+.task .tx{font-size:13.2px;font-weight:500}
+.task .meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.pill{padding:2px 7px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.02em}
+.pill.crit{background:#FEE2E2;color:var(--red)}
+.pill.high{background:#FEF3C7;color:var(--amber)}
+.pill.med{background:#E0E7FF;color:#4338CA}
+.ws{padding:2px 7px;border-radius:5px;background:#EEF2F6;color:var(--muted);font-size:10px;font-weight:700}
+.deliv{color:var(--green);font-weight:600}
+.note-in{width:100%;margin-top:7px;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;display:none}
+.task.open .note-in{display:block}
+.notebtn{background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;padding:0 3px;font-family:inherit}
+.notebtn:hover{color:var(--blue)}
+.notebtn.has{color:var(--amber)}
 
-    .bar-rows { display: flex; flex-direction: column; gap: 10px; }
-    .bar-row { display: flex; align-items: center; gap: 10px; }
-    .bar-label { width: 110px; font-size: 12px; font-weight: 600; text-align: right; flex-shrink: 0; }
-    .bar-track { flex: 1; background: #f3f4f6; border-radius: 99px; height: 20px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
-    .bar-amt { width: 70px; font-size: 12px; font-weight: 700; color: #666; }
+/* ---------- route cards ---------- */
+.route{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--card)}
+.route .rh{padding:13px 16px;color:#fff;display:flex;align-items:center;gap:10px}
+.route .rid{background:rgba(255,255,255,.2);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:800}
+.route .rt{font-weight:800;font-size:14.5px}
+.route .rb{padding:14px 16px}
+.rrow{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #F1F4F7;font-size:12.8px}
+.rrow:last-child{border:none}
+.rrow .k{width:112px;flex-shrink:0;color:var(--muted);font-weight:700;font-size:11.5px}
+.rrow .v{flex:1}
 
-    .sec-title { font-size: 15px; font-weight: 800; margin-bottom: 5px; }
-    .sec-sub { font-size: 12px; color: #888; margin-bottom: 14px; }
-    .section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-    .form-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .empty { text-align: center; padding: 36px; color: #ccc; font-size: 13px; }
+/* ---------- table ---------- */
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{background:var(--navy);color:#fff;text-align:left;padding:9px 11px;font-size:11.5px;font-weight:700}
+th:first-child{border-radius:7px 0 0 0}
+th:last-child{border-radius:0 7px 0 0}
+td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:#FAFBFC}
+td input{width:100%;padding:4px 7px;font-size:12.5px}
+.st{padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:800;display:inline-block}
+.st.ok{background:#DCFCE7;color:var(--green)}
+.st.bad{background:#FEE2E2;color:var(--red)}
+.st.none{background:#F1F4F7;color:var(--faint)}
 
-    .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .alloc-item { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
+.hint{background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 8px 8px 0;padding:11px 14px;font-size:12.7px;color:#78350F;margin-bottom:14px}
+.hint b{color:#92400E}
 
-    .tip { position: fixed; background: #fff; border: 1px solid #e5e7eb; border-radius: 9px; padding: 9px 12px; font-size: 12px; pointer-events: none; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,.12); display: none; white-space: nowrap; }
+footer{text-align:center;padding:26px;font-size:11.5px;color:var(--faint)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
-    @media (max-width: 600px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .form-group.full { grid-column: 1; }
-      .budget-cards { grid-template-columns: 1fr 1fr; }
-      .budget-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+@media(max-width:900px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .days{grid-template-columns:repeat(5,1fr)}
+  main{padding:16px 14px 50px}
+  header,nav{padding-left:14px;padding-right:14px}
+}
+</style>
 </head>
 <body>
 
+<h2 class="sr">Full Marks Education IB Maths launch dashboard with task tracking, funnel routes, asset checklist and metrics</h2>
+
 <header>
   <div>
-    <h1>📊 Marketing Plan Matrix Planner</h1>
-    <span>Priority · Effort/Impact · Budget — all channels</span>
+    <h1>Full Marks — IB Maths AI/AA Launch</h1>
+    <div class="sub">Website direct · Facebook Ads · LinkedIn</div>
   </div>
+  <div class="spacer"></div>
+  <button class="hbtn" onclick="expJSON()">↓ Save progress</button>
+  <button class="hbtn" onclick="document.getElementById('imp').click()">↑ Load progress</button>
+  <button class="hbtn" onclick="resetAll()">Reset</button>
+  <input type="file" id="imp" accept=".json" style="display:none" onchange="impJSON(event)">
 </header>
 
-<div class="tabs">
-  <button class="tab-btn active" data-tab="campaigns" onclick="setTab('campaigns')">📋 Campaigns</button>
-  <button class="tab-btn" data-tab="priority" onclick="setTab('priority')">🎯 Priority Matrix</button>
-  <button class="tab-btn" data-tab="effort" onclick="setTab('effort')">💡 Effort vs Impact</button>
-  <button class="tab-btn" data-tab="budget" onclick="setTab('budget')">💰 Budget</button>
-</div>
+<nav>
+  <button class="tab on" data-t="dash" onclick="go('dash')">Dashboard</button>
+  <button class="tab" data-t="plan" onclick="go('plan')">10-Day Plan</button>
+  <button class="tab" data-t="routes" onclick="go('routes')">Funnel Routes</button>
+  <button class="tab" data-t="assets" onclick="go('assets')">Assets</button>
+  <button class="tab" data-t="metrics" onclick="go('metrics')">Metrics</button>
+  <button class="tab" data-t="ads" onclick="go('ads')">Ads Setup</button>
+</nav>
 
-<div class="content" id="content"></div>
-<div class="tip" id="tip"></div>
+<main id="main"></main>
+<footer>Full Marks Education · Independently developed. Not endorsed by the International Baccalaureate Organization.</footer>
 
 <script>
-// ── CONSTANTS ───────────────────────────────────────────
-const CHANNELS = ['Social Media','Paid Ads','SEO','Content','Email','Events','PR','Influencer'];
-const CH_COLOR = {
-  'Social Media':'#3b82f6','Paid Ads':'#f97316','SEO':'#10b981','Content':'#8b5cf6',
-  'Email':'#06b6d4','Events':'#f59e0b','PR':'#ec4899','Influencer':'#84cc16'
-};
-const STATUSES = ['Planning','Active','Paused','Completed'];
-const ST_COLOR = { Planning:'#3b82f6', Active:'#10b981', Paused:'#f59e0b', Completed:'#6b7280' };
+/* =====================================================================
+   DATA — consolidated from the strategy PDF, the 3 working documents
+   and the execution workbook. Trimmed to 3 channels:
+   website direct · Facebook ads · LinkedIn
+   ===================================================================== */
 
-// ── STATE ───────────────────────────────────────────────
-let campaigns = [
-  {id:1,name:'Instagram Reels Campaign',channel:'Social Media',budget:5000,impact:4,effort:2,urgency:3,status:'Active',notes:'Q3 brand awareness'},
-  {id:2,name:'Google Search Ads',channel:'Paid Ads',budget:15000,impact:5,effort:3,urgency:5,status:'Active',notes:'Core revenue driver'},
-  {id:3,name:'SEO Blog Revamp',channel:'SEO',budget:3000,impact:5,effort:5,urgency:2,status:'Planning',notes:'Long-term organic growth'},
-  {id:4,name:'Monthly Newsletter',channel:'Email',budget:800,impact:3,effort:1,urgency:4,status:'Active',notes:'Customer retention'},
-  {id:5,name:'Annual Trade Show',channel:'Events',budget:20000,impact:4,effort:5,urgency:3,status:'Planning',notes:'B2B lead gen'},
-  {id:6,name:'Influencer Collab',channel:'Influencer',budget:8000,impact:3,effort:2,urgency:2,status:'Planning',notes:'New audience reach'},
-  {id:7,name:'Press Release – Launch',channel:'PR',budget:2500,impact:4,effort:2,urgency:5,status:'Active',notes:'Product launch coverage'},
-  {id:8,name:'YouTube Tutorial Series',channel:'Content',budget:6000,impact:4,effort:4,urgency:1,status:'Planning',notes:'Education-led growth'},
+const TASKS = [
+ // Day 1 — Offer & product truth
+ {id:'D1-01',d:1,w:'Product',p:'Critical',t:'Inventory every IB Maths AI asset by topic, level and asset type',v:'Verified AI inventory'},
+ {id:'D1-02',d:1,w:'Product',p:'Critical',t:'Inventory every IB Maths AA asset by topic, level and asset type',v:'Verified AA inventory'},
+ {id:'D1-03',d:1,w:'Product',p:'Critical',t:'Log missing assets, duplicates, outdated versions and launch blockers',v:'Gap and blocker list'},
+ {id:'D1-04',d:1,w:'Offer',p:'Critical',t:'Choose launch scope: AI, AA or both — and exactly which levels are included',v:'Approved launch scope'},
+ {id:'D1-05',d:1,w:'Offer',p:'Critical',t:'Define individual and department licence boundaries',v:'Licence framework'},
+ {id:'D1-06',d:1,w:'Offer',p:'Critical',t:'Set founding price, planned standard price and topic-kit downsell',v:'Price decision sheet'},
+ {id:'D1-07',d:1,w:'Offer',p:'High',t:'Write the current-edition, 12-month update and 2029 upgrade promise',v:'Edition and update policy'},
+ {id:'D1-08',d:1,w:'Funnel',p:'Critical',t:'Select the sample lesson and approve the 4-route routing rule',v:'Sample choice + routing matrix'},
+ {id:'D1-09',d:1,w:'Offer',p:'High',t:'Write the claims list: approved / needs evidence / prohibited',v:'Claims list'},
+
+ // Day 2 — Packaging
+ {id:'D2-01',d:2,w:'Product',p:'Critical',t:'Standardise the customer-facing folder tree and file naming',v:'Final folder structure'},
+ {id:'D2-02',d:2,w:'Product',p:'Critical',t:'Remove drafts, internal notes, duplicates and superseded versions',v:'Clean master package'},
+ {id:'D2-03',d:2,w:'Product',p:'Critical',t:'Create the START HERE guide',v:'START HERE guide'},
+ {id:'D2-04',d:2,w:'Product',p:'High',t:'Create the course map and pacing overview',v:'Course map / pacing file'},
+ {id:'D2-05',d:2,w:'Product',p:'Medium',t:'Create the edition number and changelog',v:'Version + changelog file'},
+ {id:'D2-06',d:2,w:'Offer',p:'Critical',t:'Write plain-English individual and department licence files',v:'Licence documents'},
+ {id:'D2-07',d:2,w:'Commerce',p:'High',t:'Set up secure delivery prototype and run a dummy access test',v:'Delivery prototype'},
+
+ // Day 3 — Sample pack
+ {id:'D3-01',d:3,w:'Product',p:'Critical',t:'Prepare the sample lesson presentation',v:'Sample presentation'},
+ {id:'D3-02',d:3,w:'Product',p:'Critical',t:'Prepare matching student notes',v:'Sample student notes'},
+ {id:'D3-03',d:3,w:'Product',p:'Critical',t:'Prepare matching teacher notes with answers and guidance',v:'Sample teacher notes'},
+ {id:'D3-04',d:3,w:'Product',p:'Critical',t:'Prepare worksheet, answer key and mini-assessment',v:'Practice + assessment set'},
+ {id:'D3-05',d:3,w:'Product',p:'High',t:'Create the one-page implementation guide and full-course context map',v:'Implementation guide'},
+ {id:'D3-06',d:3,w:'Creative',p:'High',t:'Package the sample folder, cover image and downloadable archive',v:'Final sample pack'},
+ {id:'D3-07',d:3,w:'Product',p:'Critical',t:'Run an independent teacher-use test and correct issues found',v:'Teacher QA sign-off'},
+
+ // Day 4 — Messaging
+ {id:'D4-01',d:4,w:'Offer',p:'Critical',t:'Write the one-sentence promise and three value pillars',v:'Core messaging block'},
+ {id:'D4-02',d:4,w:'Funnel',p:'High',t:'Write segment messages: new-to-IB, overloaded solo, department lead',v:'Segment messaging matrix'},
+ {id:'D4-03',d:4,w:'Funnel',p:'Critical',t:'Build the routing matrix for sample, product-direct and school destinations',v:'Traffic routing matrix'},
+ {id:'D4-04',d:4,w:'Web',p:'Critical',t:'Write the product-page copy',v:'Product-page copy deck'},
+ {id:'D4-05',d:4,w:'Web',p:'Critical',t:'Write the sample landing-page and thank-you-page copy',v:'Sample funnel copy'},
+ {id:'D4-06',d:4,w:'Offer',p:'High',t:'Write objections, FAQs, licence explanation and syllabus-transition copy',v:'FAQ + objection bank'},
+ {id:'D4-07',d:4,w:'Creative',p:'High',t:'Create the ad-copy bank: hooks, headlines, descriptions and CTAs',v:'Ad-copy bank'},
+ {id:'D4-08',d:4,w:'Analytics',p:'High',t:'Define campaign names, UTM convention and conversion-event names',v:'Measurement naming sheet'},
+ {id:'D4-09',d:4,w:'Creative',p:'High',t:'Record the 3–5 minute product-tour video',v:'Product-tour video'},
+
+ // Day 5 — Web
+ {id:'D5-01',d:5,w:'Web',p:'Critical',t:'Build the main product page using actual resource visuals',v:'Live product page'},
+ {id:'D5-02',d:5,w:'Web',p:'Critical',t:'Build the sample-pack landing page',v:'Live sample page'},
+ {id:'D5-03',d:5,w:'Web',p:'Critical',t:'Build the thank-you page — download, tour and buy-now CTA together',v:'Live thank-you page'},
+ {id:'D5-04',d:5,w:'Web',p:'Critical',t:'Build the pricing and licence comparison section',v:'Pricing section'},
+ {id:'D5-05',d:5,w:'Web',p:'Critical',t:'Build the school quote page and qualification form',v:'School quote path'},
+ {id:'D5-06',d:5,w:'Web',p:'High',t:'Embed the product-tour video and screenshot inventory',v:'Product proof section'},
+ {id:'D5-07',d:5,w:'Web',p:'High',t:'Complete mobile, accessibility, link and page-speed QA',v:'Web QA report'},
+
+ // Day 6 — CRM
+ {id:'D6-01',d:6,w:'CRM',p:'Critical',t:'Configure CRM fields and tags: role, AI/AA, level, source, route, buyer status',v:'CRM schema'},
+ {id:'D6-02',d:6,w:'CRM',p:'Critical',t:'Connect the website sample form to the CRM',v:'Website form integration'},
+ {id:'D6-03',d:6,w:'CRM',p:'High',t:'Connect Facebook and LinkedIn lead forms to the CRM',v:'Native lead integration'},
+ {id:'D6-04',d:6,w:'CRM',p:'Critical',t:'Build the immediate delivery email — sample, product link and reply prompt',v:'Delivery email'},
+ {id:'D6-05',d:6,w:'CRM',p:'Critical',t:'Build the accelerated sales sequence for days 1, 2, 3 and 5',v:'Four-email sales sequence'},
+ {id:'D6-06',d:6,w:'CRM',p:'High',t:'Create teacher, school and buyer-suppression branches',v:'Automation branches'},
+ {id:'D6-07',d:6,w:'CRM',p:'High',t:'Test delivery, links, replies, unsubscribe, tags and notifications',v:'CRM QA report'},
+
+ // Day 7 — Commerce
+ {id:'D7-01',d:7,w:'Commerce',p:'Critical',t:'Create Stripe products, prices or Payment Links for each offer',v:'Live checkout products'},
+ {id:'D7-02',d:7,w:'Commerce',p:'Critical',t:'Configure payment methods, tax treatment and billing details',v:'Checkout configuration'},
+ {id:'D7-03',d:7,w:'Commerce',p:'Critical',t:'Configure receipt, licence confirmation and access emails',v:'Transactional email set'},
+ {id:'D7-04',d:7,w:'Commerce',p:'Critical',t:'Connect checkout to secure fulfilment',v:'Fulfilment automation'},
+ {id:'D7-05',d:7,w:'Commerce',p:'High',t:'Finalise the school qualification form and lead routing',v:'Qualified school workflow'},
+ {id:'D7-06',d:7,w:'Commerce',p:'High',t:'Create the department quote, order form, invoice and licence templates',v:'School sales document set'},
+ {id:'D7-07',d:7,w:'Commerce',p:'Medium',t:'Create the 15-minute school walkthrough script',v:'Demo script'},
+ {id:'D7-08',d:7,w:'Commerce',p:'Critical',t:'Run test individual and school transactions end-to-end',v:'Purchase QA evidence'},
+
+ // Day 8 — Analytics & campaigns
+ {id:'D8-01',d:8,w:'Analytics',p:'Critical',t:'Install or verify GA4 / equivalent web analytics',v:'Web analytics active'},
+ {id:'D8-02',d:8,w:'Analytics',p:'Critical',t:'Install Meta Pixel and Conversions API where practical',v:'Meta tracking active'},
+ {id:'D8-03',d:8,w:'Analytics',p:'Critical',t:'Install the LinkedIn Insight Tag',v:'LinkedIn tracking active'},
+ {id:'D8-04',d:8,w:'Analytics',p:'Critical',t:'Configure all funnel conversion events',v:'Event map implemented'},
+ {id:'D8-05',d:8,w:'Analytics',p:'High',t:'Apply the UTM convention to every campaign and link',v:'UTM applied'},
+ {id:'D8-06',d:8,w:'Funnel',p:'High',t:'Build FB cold-sample, FB product-direct and LinkedIn school campaign drafts',v:'Campaign drafts (unpublished)'},
+ {id:'D8-07',d:8,w:'Funnel',p:'High',t:'Build retargeting and buyer-suppression audiences',v:'Audience structure'},
+ {id:'D8-08',d:8,w:'Analytics',p:'High',t:'Test all events and create the weekly performance view',v:'Verified event map + dashboard'},
+
+ // Day 9 — Creative & proof
+ {id:'D9-01',d:9,w:'Creative',p:'High',t:'Produce at least 3 direct-to-product teacher creatives',v:'Product-direct ad set'},
+ {id:'D9-02',d:9,w:'Creative',p:'High',t:'Produce at least 3 sample-pack teacher creatives',v:'Sample ad set'},
+ {id:'D9-03',d:9,w:'Creative',p:'High',t:'Produce at least 2 school/department creatives for LinkedIn',v:'Department ad set'},
+ {id:'D9-04',d:9,w:'Creative',p:'Medium',t:'Finalise founder video and product-tour clips',v:'Video assets'},
+ {id:'D9-05',d:9,w:'Creative',p:'Medium',t:'Prepare organic launch posts',v:'Organic launch posts'},
+ {id:'D9-06',d:9,w:'Offer',p:'High',t:'Collect and approve verified testimonials or pilot evidence',v:'Approved proof'},
+ {id:'D9-07',d:9,w:'Creative',p:'Critical',t:'Run final claims, link, size and destination QA on every creative',v:'Creative QA sign-off'},
+
+ // Day 10 — Launch
+ {id:'D10-01',d:10,w:'Launch',p:'Critical',t:'Send the warm-list launch email straight to the product page',v:'Warm launch sent'},
+ {id:'D10-02',d:10,w:'Launch',p:'Medium',t:'Publish the organic launch posts',v:'Posts live'},
+ {id:'D10-03',d:10,w:'Launch',p:'Critical',t:'Launch a small FB cold-traffic sample-pack campaign',v:'R1 live'},
+ {id:'D10-04',d:10,w:'Launch',p:'High',t:'Launch a small FB retargeting product-direct campaign',v:'R4 live'},
+ {id:'D10-05',d:10,w:'Launch',p:'High',t:'Launch the LinkedIn school quote test',v:'R3 live'},
+ {id:'D10-06',d:10,w:'Launch',p:'Critical',t:'Monitor forms, emails, downloads, checkout, access and quote alerts live',v:'Launch-day QA log'},
+ {id:'D10-07',d:10,w:'Launch',p:'Critical',t:'Personally contact every qualified school lead',v:'School follow-up log'},
+ {id:'D10-08',d:10,w:'Launch',p:'High',t:'Record baseline metrics and create the 7-day optimisation backlog',v:'Baseline + backlog'},
 ];
-let nid = 9;
-let tab = 'campaigns';
-let editId = null;
-let fd = blankForm();
 
-function blankForm() {
-  return {name:'',channel:'Social Media',budget:'',impact:3,effort:3,urgency:3,status:'Planning',notes:''};
+const DAYTITLES = {
+ 1:'Product truth and offer lock', 2:'Packaging and buyer experience', 3:'Build the sample pack',
+ 4:'Messaging and creative system', 5:'Website build', 6:'CRM, email and lead routing',
+ 7:'Checkout and school sales path', 8:'Measurement and campaign setup',
+ 9:'Creative production and proof', 10:'Soft launch and controlled traffic'
+};
+
+const ROUTES = [
+ {id:'R1',c:'#2563EB',name:'Cold — proof first',chan:'Facebook Ads',
+  who:'Cold teacher. Feels the problem but does not know Full Marks yet.',
+  msg:'"See one complete lesson where every asset actually matches."',
+  dest:'Sample-pack landing page', cta:'Get the complete sample lesson',
+  next:'Thank-you page shows sample + product tour + pricing together',
+  buy:'Product page → checkout, any time. No forced wait.',
+  tag:'route_sample_cold', metric:'Sample-page conversion rate · 7-day purchase rate'},
+ {id:'R2',c:'#15803D',name:'Direct intent',chan:'Website direct',
+  who:'High-intent teacher arriving by direct navigation, referral or warm email.',
+  msg:'"Teach the course. Stop rebuilding it."',
+  dest:'Main product page', cta:'Buy teacher licence / View pricing',
+  next:'Checkout, or the product-tour section if still evaluating',
+  buy:'Checkout immediately — no lead gate.',
+  tag:'route_product_direct', metric:'Product-page purchase rate · revenue per 100 visits'},
+ {id:'R3',c:'#B45309',name:'School sales',chan:'LinkedIn',
+  who:'Head of Maths, DP coordinator or school leader with organisation-level pain.',
+  msg:'"Standardise delivery and reduce onboarding risk across your department."',
+  dest:'Department section / school quote page', cta:'Request a quote · Book a walkthrough',
+  next:'Qualification form → tailored 15-min demo → written quote',
+  buy:'Invoice or purchase order, after qualification.',
+  tag:'route_school', metric:'Qualified quote requests · quote-to-close rate · response time'},
+ {id:'R4',c:'#7C3AED',name:'Retarget — accelerate',chan:'Facebook Ads',
+  who:'Sample lead or site visitor who has seen proof but has not bought.',
+  msg:'"The full kit replaces the planning you are still doing every week."',
+  dest:'Product page / pricing section', cta:'Choose a licence',
+  next:'Checkout, or school quote if the role signals a department',
+  buy:'Checkout or quote, any time.',
+  tag:'route_sample_engaged', metric:'Sample-to-product click rate · 7-day purchase rate'},
+];
+
+const RULES = [
+ ['Cold, no prior engagement','R1 — proof first','Sample page','A premium purchase is too big an ask before proof'],
+ ['Direct navigation, referral, or warm email click','R2 — product direct','Product page','Intent is already high; a lead gate only adds friction'],
+ ['Visited pricing or watched 50%+ of the tour','R2 — product direct','Product page','They are evaluating, not discovering'],
+ ['School role or organisation-level pain','R3 — school sales','Quote page','Purchase needs licence, invoice and stakeholders'],
+ ['Downloaded sample but no product view','R4 — accelerate','Product page','Proof delivered; next message must sell'],
+ ['Existing buyer or warm contact','R2 — product direct','Product / upgrade page','Trust already exists'],
+];
+
+const ASSETS = [
+ ['A01','Product truth','Verified AI inventory',1],
+ ['A02','Product truth','Verified AA inventory',1],
+ ['A03','Product truth','Gap and launch-blocker log',1],
+ ['A04','Offer','Launch-scope statement',1],
+ ['A05','Offer','Price and licence matrix',1],
+ ['A06','Offer','Current-edition and 2029 upgrade policy',1],
+ ['A07','Packaging','Customer-ready folder tree',1],
+ ['A08','Packaging','START HERE guide',1],
+ ['A09','Packaging','Course map / pacing overview',1],
+ ['A10','Packaging','Version and changelog',0],
+ ['A11','Packaging','Individual licence file',1],
+ ['A12','Packaging','Department licence file',1],
+ ['A13','Lead magnet','Sample presentation',1],
+ ['A14','Lead magnet','Sample student notes',1],
+ ['A15','Lead magnet','Sample teacher notes',1],
+ ['A16','Lead magnet','Sample worksheet',1],
+ ['A17','Lead magnet','Sample answer key / markscheme',1],
+ ['A18','Lead magnet','Sample mini-assessment / exit ticket',1],
+ ['A19','Lead magnet','Sample implementation guide',1],
+ ['A20','Lead magnet','Sample cover and downloadable archive',1],
+ ['A21','Lead magnet','Teacher-test sign-off',1],
+ ['A22','Web','Main product page',1],
+ ['A23','Web','Sample landing page',1],
+ ['A24','Web','Thank-you page',1],
+ ['A25','Web','Pricing / licence comparison',1],
+ ['A26','Web','School quote page and form',1],
+ ['A27','Web','FAQ and syllabus-transition section',1],
+ ['A28','Web','Value calculator / time-saved estimator',0],
+ ['A29','Web','Mobile and accessibility QA report',1],
+ ['A30','CRM','CRM field and tag schema',1],
+ ['A31','CRM','Website sample-form integration',1],
+ ['A32','CRM','Facebook / LinkedIn lead integration',0],
+ ['A33','Email','Immediate sample delivery email',1],
+ ['A34','Email','Accelerated four-email sales sequence',1],
+ ['A35','Email','School branch and buyer suppression',1],
+ ['A36','Email','Email QA report',1],
+ ['A37','Commerce','Stripe products / Payment Links',1],
+ ['A38','Commerce','Secure fulfilment automation',1],
+ ['A39','Commerce','Receipt, licence and access emails',1],
+ ['A40','School sales','Qualification form',1],
+ ['A41','School sales','Quote / order / invoice template',1],
+ ['A42','School sales','15-minute walkthrough script',0],
+ ['A43','Commerce','End-to-end transaction test',1],
+ ['A44','Analytics','GA4 / web analytics',1],
+ ['A45','Analytics','Meta Pixel / CAPI',1],
+ ['A46','Analytics','LinkedIn Insight Tag',1],
+ ['A47','Analytics','Conversion-event map',1],
+ ['A48','Analytics','UTM convention',1],
+ ['A49','Creative','Product-direct teacher ads',1],
+ ['A50','Creative','Sample-pack teacher ads',1],
+ ['A51','Creative','Department ads (LinkedIn)',1],
+ ['A52','Creative','Founder and product-tour videos',1],
+ ['A53','Proof','Verified testimonials / reviewer quotes',0],
+ ['A54','Support','Support email and troubleshooting guide',1],
+ ['A55','Legal','Terms, privacy, refund and disclaimer',1],
+];
+
+const METRICS = [
+ {id:'M01',r:'R1 · FB cold',m:'Sample-page conversion rate',u:'%',tgt:'25'},
+ {id:'M02',r:'R1 · FB cold',m:'Cost per qualified sample lead',u:'USD',tgt:''},
+ {id:'M03',r:'R1 · FB cold',m:'Sample 7-day purchase rate',u:'%',tgt:'3'},
+ {id:'M04',r:'R2 · Website direct',m:'Product-page purchase rate',u:'%',tgt:'2'},
+ {id:'M05',r:'R2 · Website direct',m:'Revenue per 100 product-page visits',u:'USD',tgt:''},
+ {id:'M06',r:'R3 · LinkedIn',m:'Qualified school quote requests',u:'count',tgt:''},
+ {id:'M07',r:'R3 · LinkedIn',m:'Quote-to-close rate',u:'%',tgt:''},
+ {id:'M08',r:'R3 · LinkedIn',m:'Hours to first response on school lead',u:'hours',tgt:'24'},
+ {id:'M09',r:'R4 · FB retarget',m:'Sample-to-product click rate',u:'%',tgt:'15'},
+ {id:'M10',r:'All routes',m:'Checkout start → completion rate',u:'%',tgt:'60'},
+ {id:'M11',r:'Email',m:'Delivery email open rate',u:'%',tgt:'45'},
+ {id:'M12',r:'Customer',m:'Buyers who open the START HERE guide',u:'%',tgt:'70'},
+];
+
+/* ---------- state ---------- */
+const KEY = 'fm_launch_v1';
+let S = load();
+
+function blank(){
+  return {
+    start:'2026-07-20',
+    tasks:{},        // id -> {done, note}
+    assets:{},       // id -> {done, note}
+    metrics:{},      // id -> {tgt, act}
+    routes:{},       // id -> status
+    filter:{day:'all', ws:'all', hide:false},
+    tab:'dash'
+  };
+}
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(blank(), JSON.parse(r)); }catch(e){}
+  return blank();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ---------- helpers ---------- */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const tDone = id => !!(S.tasks[id]||{}).done;
+const aDone = id => !!(S.assets[id]||{}).done;
+const pct   = (a,b) => b ? Math.round(a/b*100) : 0;
+
+function stats(){
+  const total = TASKS.length;
+  const done  = TASKS.filter(t=>tDone(t.id)).length;
+  const crit  = TASKS.filter(t=>t.p==='Critical');
+  const critDone = crit.filter(t=>tDone(t.id)).length;
+  const req   = ASSETS.filter(a=>a[3]===1);
+  const reqDone = req.filter(a=>aDone(a[0])).length;
+  const routesReady = ROUTES.filter(r=>S.routes[r.id]==='Ready').length;
+  return {total,done,crit:crit.length,critDone,req:req.length,reqDone,routesReady};
 }
 
-// ── TAB ─────────────────────────────────────────────────
-function setTab(t) {
-  tab = t;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
-  renderContent();
-  window.scrollTo(0, 0);
+function dayStats(d){
+  const ts = TASKS.filter(t=>t.d===d);
+  return {n:ts.length, done:ts.filter(t=>tDone(t.id)).length};
 }
 
-// ── RENDER ───────────────────────────────────────────────
-function renderContent() {
-  const el = document.getElementById('content');
-  if (tab === 'campaigns') el.innerHTML = tplCampaigns();
-  else if (tab === 'priority') el.innerHTML = tplMatrix('priority');
-  else if (tab === 'effort') el.innerHTML = tplMatrix('effort');
-  else if (tab === 'budget') el.innerHTML = tplBudget();
+/* ---------- nav ---------- */
+function go(t){
+  S.tab=t; save();
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  render();
+  window.scrollTo(0,0);
 }
 
-// ── CAMPAIGNS TAB ────────────────────────────────────────
-function tplCampaigns() {
-  const isEdit = !!editId;
-  return `
-    <div class="sec-title">${isEdit ? '✏️ Edit Campaign' : '➕ Add Campaign'}</div>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Campaign Name</label>
-        <input id="f-name" value="${h(fd.name)}" placeholder="e.g. Summer Sale Ads">
-      </div>
-      <div class="form-group">
-        <label>Channel</label>
-        <select id="f-channel">${CHANNELS.map(c=>`<option ${fd.channel===c?'selected':''}>${c}</option>`).join('')}</select>
-      </div>
-      <div class="form-group">
-        <label>Budget (USD)</label>
-        <input id="f-budget" type="number" min="0" value="${fd.budget}" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select id="f-status">${STATUSES.map(s=>`<option ${fd.status===s?'selected':''}>${s}</option>`).join('')}</select>
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <input id="f-notes" value="${h(fd.notes)}" placeholder="Optional notes...">
-      </div>
-      <div class="form-group full">
-        <label>Impact — business value (<span id="lv-impact">${fd.impact}</span>/5)</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="5" value="${fd.impact}" oninput="sl('impact',this.value)">
-          <span class="slider-val" id="sv-impact">${fd.impact}</span>
-        </div>
-      </div>
-      <div class="form-group full">
-        <label>Effort — resources needed (<span id="lv-effort">${fd.effort}</span>/5)</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="5" value="${fd.effort}" oninput="sl('effort',this.value)">
-          <span class="slider-val" id="sv-effort">${fd.effort}</span>
-        </div>
-      </div>
-      <div class="form-group full">
-        <label>Urgency — time sensitivity (<span id="lv-urgency">${fd.urgency}</span>/5)</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="5" value="${fd.urgency}" oninput="sl('urgency',this.value)">
-          <span class="slider-val" id="sv-urgency">${fd.urgency}</span>
-        </div>
-      </div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="save()">${isEdit ? 'Update Campaign' : 'Add Campaign'}</button>
-      ${isEdit ? `<button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>` : ''}
-    </div>
-    <hr class="section-divider">
-    <div style="font-weight:700;font-size:13px;margin-bottom:10px">All Campaigns (${campaigns.length})</div>
-    <div class="c-list">
-      ${campaigns.length === 0
-        ? '<div class="empty">No campaigns yet. Add one above!</div>'
-        : campaigns.map(c => `
-          <div class="c-card">
-            <div class="c-dot" style="background:${CH_COLOR[c.channel]}"></div>
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-                <span class="c-name">${h(c.name)}</span>
-                <span class="tag" style="background:${ST_COLOR[c.status]}20;color:${ST_COLOR[c.status]}">${c.status}</span>
-                <span style="font-size:11px;color:#999">${c.channel}</span>
-              </div>
-              <div class="c-meta">Impact ${c.impact}/5 · Effort ${c.effort}/5 · Urgency ${c.urgency}/5${c.notes ? ' · ' + h(c.notes) : ''}</div>
-            </div>
-            <div style="font-weight:800;color:#059669;font-size:13px;white-space:nowrap;margin-right:4px">$${c.budget.toLocaleString()}</div>
-            <button class="btn btn-ghost btn-sm" onclick="startEdit(${c.id})">Edit</button>
-            <button class="btn btn-red btn-sm" onclick="del(${c.id})">✕</button>
-          </div>
-        `).join('')}
-    </div>
-  `;
+function render(){
+  const m = document.getElementById('main');
+  const t = S.tab;
+  if(t==='dash')    m.innerHTML = viewDash();
+  else if(t==='plan')   m.innerHTML = viewPlan();
+  else if(t==='routes') m.innerHTML = viewRoutes();
+  else if(t==='assets') m.innerHTML = viewAssets();
+  else if(t==='metrics')m.innerHTML = viewMetrics();
+  else if(t==='ads')    m.innerHTML = viewAds();
 }
 
-// ── MATRIX TAB ───────────────────────────────────────────
-function tplMatrix(type) {
-  const W = 620, H = 480, P = 70;
-  const PW = W - P * 2, PH = H - P * 2;
-  const CX = P + PW / 2, CY = P + PH / 2;
-  const isPri = type === 'priority';
-  const xKey = isPri ? 'urgency' : 'effort';
+/* =====================================================================
+   DASHBOARD
+   ===================================================================== */
+function viewDash(){
+  const s = stats();
+  const gateOK = s.critDone===s.crit && s.reqDone===s.req && s.routesReady===ROUTES.length;
 
-  // Quadrants: [top-left, top-right, bottom-left, bottom-right]
-  const Q = isPri ? [
-    {label:'SCHEDULE',sub:'Important · Plan It',bg:'#dbeafe',tc:'#1d4ed8'},
-    {label:'DO NOW',sub:'Act Immediately',bg:'#fee2e2',tc:'#dc2626'},
-    {label:'DROP / SKIP',sub:'Low Value',bg:'#f3f4f6',tc:'#6b7280'},
-    {label:'DELEGATE',sub:'Hand It Off',bg:'#fef9c3',tc:'#b45309'},
-  ] : [
-    {label:'QUICK WINS',sub:'Low Effort · High Return',bg:'#dcfce7',tc:'#15803d'},
-    {label:'BIG BETS',sub:'Worth the Investment',bg:'#dbeafe',tc:'#1d4ed8'},
-    {label:'FILL-INS',sub:'Easy but Low Value',bg:'#fef9c3',tc:'#b45309'},
-    {label:'AVOID',sub:'High Cost · Low Return',bg:'#f3f4f6',tc:'#6b7280'},
-  ];
-
-  const qr = [
-    {x:P, y:P, w:PW/2, h:PH/2},
-    {x:CX, y:P, w:PW/2, h:PH/2},
-    {x:P, y:CY, w:PW/2, h:PH/2},
-    {x:CX, y:CY, w:PW/2, h:PH/2},
-  ];
-  const lc = [
-    {x:P+PW/4, y:P+18}, {x:CX+PW/4, y:P+18},
-    {x:P+PW/4, y:CY+18}, {x:CX+PW/4, y:CY+18},
-  ];
-
-  function tx(v) { return P + ((v-1)/4) * PW; }
-  function ty(v) { return P + PH - ((v-1)/4) * PH; }
-
-  const maxB = Math.max(...campaigns.map(c => c.budget), 1);
-  const usedChannels = [...new Set(campaigns.map(c => c.channel))];
-
-  const rects = Q.map((q,i) =>
-    `<rect x="${qr[i].x}" y="${qr[i].y}" width="${qr[i].w}" height="${qr[i].h}" fill="${q.bg}"/>`
-  ).join('');
-
-  const labels = Q.map((q,i) => `
-    <text x="${lc[i].x}" y="${lc[i].y}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${q.tc}" opacity=".9">${q.label}</text>
-    <text x="${lc[i].x}" y="${lc[i].y+14}" text-anchor="middle" font-size="9.5" fill="${q.tc}" opacity=".6">${q.sub}</text>
-  `).join('');
-
-  const ticks = [1,2,3,4,5].map(v => `
-    <text x="${tx(v).toFixed(1)}" y="${P+PH+15}" text-anchor="middle" font-size="10" fill="#bbb">${v}</text>
-    <text x="${P-9}" y="${ty(v).toFixed(1)+4}" text-anchor="end" font-size="10" fill="#bbb">${v}</text>
-  `).join('');
-
-  const dots = campaigns.map(c => {
-    const cx = tx(c[xKey]), cy = ty(c.impact);
-    const r = Math.max(7, 7 + (c.budget / maxB) * 17);
-    const tip = `${h(c.name)}||${c.channel}||$${c.budget.toLocaleString()}||Impact:${c.impact} Effort:${c.effort} Urgency:${c.urgency}`;
-    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
-      fill="${CH_COLOR[c.channel]}bb" stroke="${CH_COLOR[c.channel]}" stroke-width="1.5"
-      style="cursor:pointer" data-tip="${tip}"
-      onmouseenter="showTip(event)" onmouseleave="hideTip()"/>`;
+  const workstreams = [...new Set(TASKS.map(t=>t.w))];
+  const wsRows = workstreams.map(w=>{
+    const ts = TASKS.filter(t=>t.w===w);
+    const dn = ts.filter(t=>tDone(t.id)).length;
+    return `<div class="prow"><div class="nm">${w}</div><div class="bar"><span style="width:${pct(dn,ts.length)}%"></span></div><div class="pc">${dn}/${ts.length}</div></div>`;
   }).join('');
 
-  const xAxisLabel = isPri ? 'Urgency (1 = Low  →  5 = High)' : 'Effort (1 = Low  →  5 = High)';
+  const dayCells = Object.keys(DAYTITLES).map(d=>{
+    d = +d;
+    const ds = dayStats(d);
+    const p = pct(ds.done, ds.n);
+    const cls = p===100 ? 'done' : (ds.done>0 ? 'active' : '');
+    return `<div class="day ${cls}" onclick="S.filter.day='${d}';go('plan')" title="${esc(DAYTITLES[d])}">
+      <div class="n">${d}</div><div class="s">${ds.done}/${ds.n}</div>
+      <div class="mini"><span style="width:${p}%"></span></div></div>`;
+  }).join('');
 
   return `
-    <div class="sec-title">${isPri ? '🎯 Priority Matrix — Urgency vs Impact' : '💡 Effort vs Impact Matrix'}</div>
-    <div class="sec-sub">${isPri
-      ? 'Plot campaigns by how urgent and impactful they are. Bubble size = budget.'
-      : 'Find quick wins and big bets across your marketing mix. Bubble size = budget.'
-    }</div>
-    <div class="matrix-wrap">
-      <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-        ${rects}
-        ${labels}
-        <line x1="${P}" y1="${CY}" x2="${P+PW}" y2="${CY}" stroke="#ccc" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <line x1="${CX}" y1="${P}" x2="${CX}" y2="${P+PH}" stroke="#ccc" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <line x1="${P}" y1="${P+PH}" x2="${P+PW}" y2="${P+PH}" stroke="#bbb" stroke-width="1.5"/>
-        <line x1="${P}" y1="${P}" x2="${P}" y2="${P+PH}" stroke="#bbb" stroke-width="1.5"/>
-        ${ticks}
-        <text x="${P+PW/2}" y="${H-5}" text-anchor="middle" font-size="12" font-weight="700" fill="#555">${xAxisLabel}</text>
-        <text x="13" y="${P+PH/2}" text-anchor="middle" font-size="12" font-weight="700" fill="#555" transform="rotate(-90,13,${P+PH/2})">Impact (1 = Low  →  5 = High)</text>
-        ${dots}
-      </svg>
+  <div class="gate ${gateOK?'yes':'no'}">
+    <div class="icon">${gateOK?'✅':'⛔'}</div>
+    <div>
+      <div class="t">${gateOK?'Ready for soft launch':'Not ready for soft launch'}</div>
+      <div class="d">${gateOK
+        ? 'All critical tasks complete, all required assets ready, all four routes tested. Launch small and watch it live.'
+        : `Still open: ${s.crit-s.critDone} critical task(s) · ${s.req-s.reqDone} required asset(s) · ${ROUTES.length-s.routesReady} untested route(s).`}</div>
     </div>
-    <div class="legend">
-      ${usedChannels.map(ch => `
-        <div class="legend-item">
-          <div class="legend-dot" style="background:${CH_COLOR[ch]}"></div>
-          ${ch} (${campaigns.filter(c=>c.channel===ch).length})
+  </div>
+
+  <div class="grid4" style="margin-bottom:16px">
+    <div class="kpi"><div class="lbl">Overall tasks</div><div class="val">${pct(s.done,s.total)}%</div><div class="note">${s.done} of ${s.total} complete</div></div>
+    <div class="kpi"><div class="lbl">Critical tasks</div><div class="val" style="color:${s.critDone===s.crit?'var(--green)':'var(--red)'}">${pct(s.critDone,s.crit)}%</div><div class="note">${s.critDone} of ${s.crit} complete</div></div>
+    <div class="kpi"><div class="lbl">Required assets</div><div class="val" style="color:${s.reqDone===s.req?'var(--green)':'var(--amber)'}">${pct(s.reqDone,s.req)}%</div><div class="note">${s.reqDone} of ${s.req} ready</div></div>
+    <div class="kpi"><div class="lbl">Routes tested</div><div class="val" style="color:${s.routesReady===ROUTES.length?'var(--green)':'var(--muted)'}">${s.routesReady}/${ROUTES.length}</div><div class="note">R1 · R2 · R3 · R4</div></div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">Progress by day</h2>
+    <p class="sub">Click any day to jump to its tasks.</p>
+    <div class="days">${dayCells}</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="sec">Progress by workstream</h2>
+      <p class="sub">Where the remaining work actually sits.</p>
+      ${wsRows}
+    </div>
+    <div class="card">
+      <h2 class="sec">The three channels</h2>
+      <p class="sub">Everything in this dashboard serves these and nothing else.</p>
+      ${ROUTES.map(r=>`
+        <div class="prow" style="align-items:flex-start">
+          <div style="width:34px;flex-shrink:0"><span class="pill" style="background:${r.c}22;color:${r.c}">${r.id}</span></div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:12.8px">${r.name}</div>
+            <div style="font-size:11.5px;color:var(--muted)">${r.chan} → ${r.dest}</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${S.routes[r.id]==='Ready'?'var(--green)':'var(--faint)'}">${S.routes[r.id]||'Not tested'}</div>
         </div>`).join('')}
-      <span style="font-size:11px;color:#ccc;margin-left:auto">● bubble size = budget</span>
     </div>
+  </div>
+
+  <div class="hint"><b>Sequence matters.</b> Days 1–3 settle what you are selling and build the proof asset. Everything after depends on them. If Day 1 reveals the product is not ready, fix that before continuing.</div>
   `;
 }
 
-// ── BUDGET TAB ───────────────────────────────────────────
-function tplBudget() {
-  const total = campaigns.reduce((s,c) => s+c.budget, 0);
-  const active = campaigns.filter(c=>c.status==='Active').reduce((s,c) => s+c.budget, 0);
-  const planning = campaigns.filter(c=>c.status==='Planning').reduce((s,c) => s+c.budget, 0);
+/* =====================================================================
+   10-DAY PLAN
+   ===================================================================== */
+function viewPlan(){
+  const f = S.filter;
+  const wss = [...new Set(TASKS.map(t=>t.w))];
+  let list = TASKS.filter(t =>
+    (f.day==='all' || t.d===+f.day) &&
+    (f.ws==='all'  || t.w===f.ws) &&
+    (!f.hide || !tDone(t.id))
+  );
 
-  const byChannel = {};
-  CHANNELS.forEach(ch => { byChannel[ch] = campaigns.filter(c=>c.channel===ch).reduce((s,c) => s+c.budget, 0); });
-  const byStatus = {};
-  STATUSES.forEach(s => { byStatus[s] = campaigns.filter(c=>c.status===s).reduce((s2,c) => s2+c.budget, 0); });
-
-  const maxCh = Math.max(...Object.values(byChannel), 1);
-  const sortedCh = Object.entries(byChannel).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
+  const days = [...new Set(list.map(t=>t.d))].sort((a,b)=>a-b);
+  const groups = days.map(d=>{
+    const ts = list.filter(t=>t.d===d);
+    const ds = dayStats(d);
+    return `<div class="tgroup">
+      <div class="thead">
+        <div class="dn">DAY ${d}</div>
+        <div class="tt">${esc(DAYTITLES[d])}</div>
+        <div class="tc">${ds.done}/${ds.n} complete</div>
+      </div>
+      ${ts.map(t=>{
+        const st = S.tasks[t.id]||{};
+        const has = st.note && st.note.trim();
+        return `<div class="task ${st.done?'done':''} ${has?'open':''}" id="row-${t.id}">
+          <input type="checkbox" class="cb" ${st.done?'checked':''} onchange="tog('${t.id}',this.checked)">
+          <div class="body">
+            <div class="tx">${esc(t.t)}</div>
+            <div class="meta">
+              <span class="pill ${t.p==='Critical'?'crit':t.p==='High'?'high':'med'}">${t.p}</span>
+              <span class="ws">${t.w}</span>
+              <span class="deliv">→ ${esc(t.v)}</span>
+              <span style="color:var(--faint)">${t.id}</span>
+              <button class="notebtn ${has?'has':''}" onclick="toggleNote('${t.id}')" title="Add a note">✎</button>
+            </div>
+            <textarea class="note-in" rows="2" placeholder="Notes, links, blockers…"
+              oninput="setNote('${t.id}',this.value)">${esc(st.note||'')}</textarea>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('') || '<div class="card" style="text-align:center;color:var(--faint)">Nothing matches these filters.</div>';
 
   return `
-    <div class="sec-title">💰 Budget Dashboard</div>
-    <div class="budget-cards">
-      <div class="bc">
-        <div class="lbl">Total Budget</div>
-        <div class="val">$${total.toLocaleString()}</div>
-      </div>
-      <div class="bc">
-        <div class="lbl">Active Spend</div>
-        <div class="val" style="color:#10b981">$${active.toLocaleString()}</div>
-      </div>
-      <div class="bc">
-        <div class="lbl">Pipeline</div>
-        <div class="val" style="color:#3b82f6">$${planning.toLocaleString()}</div>
-      </div>
+  <div class="card">
+    <h2 class="sec">10-Day Launch Plan</h2>
+    <p class="sub">${TASKS.length} tasks. Do not start a day until the previous day's critical tasks are done.</p>
+    <div class="filters">
+      <select onchange="S.filter.day=this.value;save();render()">
+        <option value="all"${f.day==='all'?' selected':''}>All days</option>
+        ${Object.keys(DAYTITLES).map(d=>`<option value="${d}"${f.day===d?' selected':''}>Day ${d} — ${esc(DAYTITLES[d])}</option>`).join('')}
+      </select>
+      <select onchange="S.filter.ws=this.value;save();render()">
+        <option value="all"${f.ws==='all'?' selected':''}>All workstreams</option>
+        ${wss.map(w=>`<option${f.ws===w?' selected':''}>${w}</option>`).join('')}
+      </select>
+      <button class="chip ${f.hide?'on':''}" onclick="S.filter.hide=!S.filter.hide;save();render()">Hide completed</button>
+      <span style="margin-left:auto;font-size:12px;color:var(--muted)">Showing ${list.length} of ${TASKS.length}</span>
     </div>
-    <div class="budget-grid">
-      <div>
-        <div style="font-weight:700;font-size:13px;margin-bottom:12px">Budget by Channel</div>
-        <div class="bar-rows">
-          ${sortedCh.map(([ch,v]) => `
-            <div class="bar-row">
-              <div class="bar-label">${ch}</div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${((v/maxCh)*100).toFixed(1)}%;background:${CH_COLOR[ch]}"></div>
-              </div>
-              <div class="bar-amt">$${v.toLocaleString()}</div>
-            </div>
-          `).join('')}
-        </div>
+  </div>
+  ${groups}`;
+}
 
-        <div style="font-weight:700;font-size:13px;margin:20px 0 12px">Budget by Status</div>
-        <div class="bar-rows">
-          ${STATUSES.filter(s=>byStatus[s]>0).map(s => `
-            <div class="bar-row">
-              <div class="bar-label">${s}</div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${total?((byStatus[s]/total)*100).toFixed(1):0}%;background:${ST_COLOR[s]}"></div>
-              </div>
-              <div class="bar-amt">$${byStatus[s].toLocaleString()}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
+function tog(id, v){
+  S.tasks[id] = Object.assign({}, S.tasks[id], {done:v});
+  save();
+  const row = document.getElementById('row-'+id);
+  if(row) row.classList.toggle('done', v);
+  // refresh counts without losing scroll
+  document.querySelectorAll('.thead').forEach((h,i)=>{
+    const d = +h.querySelector('.dn').textContent.replace('DAY ','');
+    const ds = dayStats(d);
+    h.querySelector('.tc').textContent = `${ds.done}/${ds.n} complete`;
+  });
+  if(S.filter.hide) render();
+}
+function toggleNote(id){ document.getElementById('row-'+id).classList.toggle('open'); }
+function setNote(id,v){ S.tasks[id]=Object.assign({},S.tasks[id],{note:v}); save(); }
 
-      <div>
-        <div style="font-weight:700;font-size:13px;margin-bottom:12px">Campaign Breakdown</div>
-        ${campaigns.length === 0
-          ? '<div class="empty">No campaigns yet.</div>'
-          : campaigns.sort((a,b) => b.budget-a.budget).map(c => `
-            <div class="alloc-item">
-              <div style="width:9px;height:9px;border-radius:50%;background:${CH_COLOR[c.channel]};flex-shrink:0"></div>
-              <span style="flex:1">${h(c.name)}</span>
-              <span style="font-weight:800;color:#059669">$${c.budget.toLocaleString()}</span>
-              <span style="color:#ccc;width:34px;text-align:right">${total?((c.budget/total)*100).toFixed(0):0}%</span>
-            </div>
-          `).join('')}
-        <div style="border-top:1px solid #e5e7eb;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:800;font-size:13px">
-          <span>Total</span>
-          <span style="color:#059669">$${total.toLocaleString()}</span>
+/* =====================================================================
+   ROUTES
+   ===================================================================== */
+function viewRoutes(){
+  return `
+  <div class="card">
+    <h2 class="sec">Four funnel routes</h2>
+    <p class="sub">Reduced from seven. The three you removed depended on SEO, topic-catalogue browsing and an existing customer base — none of which you have yet.</p>
+    <div class="hint"><b>The routing principle.</b> Cold traffic gets proof before it gets a price. Warm and high-intent traffic goes straight to the product — a lead gate there only adds friction to someone already ready to buy.</div>
+  </div>
+
+  <div class="grid2">
+    ${ROUTES.map(r=>`
+      <div class="route">
+        <div class="rh" style="background:${r.c}">
+          <div class="rid">${r.id}</div>
+          <div class="rt">${r.name}</div>
+          <div style="margin-left:auto;font-size:11.5px;opacity:.9">${r.chan}</div>
         </div>
-      </div>
+        <div class="rb">
+          <div class="rrow"><div class="k">Who</div><div class="v">${esc(r.who)}</div></div>
+          <div class="rrow"><div class="k">Message</div><div class="v"><i>${esc(r.msg)}</i></div></div>
+          <div class="rrow"><div class="k">Destination</div><div class="v"><b>${esc(r.dest)}</b></div></div>
+          <div class="rrow"><div class="k">CTA</div><div class="v">${esc(r.cta)}</div></div>
+          <div class="rrow"><div class="k">Next step</div><div class="v">${esc(r.next)}</div></div>
+          <div class="rrow"><div class="k">Purchase</div><div class="v">${esc(r.buy)}</div></div>
+          <div class="rrow"><div class="k">CRM tag</div><div class="v"><code style="background:#F1F4F7;padding:1px 6px;border-radius:4px;font-size:11.5px">${r.tag}</code></div></div>
+          <div class="rrow"><div class="k">Success metric</div><div class="v">${esc(r.metric)}</div></div>
+          <div class="rrow"><div class="k">Build status</div><div class="v">
+            <select onchange="S.routes['${r.id}']=this.value;save();render()">
+              ${['Not started','In progress','Ready'].map(o=>`<option${(S.routes[r.id]||'Not started')===o?' selected':''}>${o}</option>`).join('')}
+            </select></div></div>
+        </div>
+      </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <h2 class="sec">Routing decision rules</h2>
+    <p class="sub">When a visitor shows one of these signals, send them here.</p>
+    <table>
+      <thead><tr><th style="width:26%">Signal</th><th style="width:20%">Route</th><th style="width:20%">Destination</th><th>Why</th></tr></thead>
+      <tbody>${RULES.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td style="color:var(--muted)">${esc(r[3])}</td></tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+/* =====================================================================
+   ASSETS
+   ===================================================================== */
+function viewAssets(){
+  const cats = [...new Set(ASSETS.map(a=>a[1]))];
+  const req = ASSETS.filter(a=>a[3]===1);
+  const reqDone = req.filter(a=>aDone(a[0])).length;
+
+  return `
+  <div class="card">
+    <h2 class="sec">Asset checklist</h2>
+    <p class="sub">${ASSETS.length} assets · ${req.length} required before launch · ${reqDone} ready</p>
+    <div class="prow"><div class="nm">Required assets</div><div class="bar"><span style="width:${pct(reqDone,req.length)}%;background:${reqDone===req.length?'var(--green)':'var(--blue)'}"></span></div><div class="pc">${pct(reqDone,req.length)}%</div></div>
+  </div>
+  ${cats.map(c=>{
+    const items = ASSETS.filter(a=>a[1]===c);
+    const dn = items.filter(a=>aDone(a[0])).length;
+    return `<div class="tgroup">
+      <div class="thead"><div class="tt">${esc(c)}</div><div class="tc">${dn}/${items.length} ready</div></div>
+      ${items.map(a=>{
+        const st = S.assets[a[0]]||{};
+        return `<div class="task ${st.done?'done':''}">
+          <input type="checkbox" class="cb" ${st.done?'checked':''} onchange="togA('${a[0]}',this.checked)">
+          <div class="body">
+            <div class="tx">${esc(a[2])}</div>
+            <div class="meta">
+              <span style="color:var(--faint)">${a[0]}</span>
+              ${a[3]===1?'<span class="pill crit">Required</span>':'<span class="pill med">Optional</span>'}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')}`;
+}
+function togA(id,v){ S.assets[id]=Object.assign({},S.assets[id],{done:v}); save(); render(); }
+
+/* =====================================================================
+   METRICS
+   ===================================================================== */
+function viewMetrics(){
+  return `
+  <div class="card">
+    <h2 class="sec">Metrics that matter</h2>
+    <p class="sub">Reduced from 27 to ${METRICS.length}. Enter your actuals as data comes in — status calculates automatically.</p>
+    <div class="hint"><b>Do not judge too early.</b> Use the first 100–200 qualified visits and first 30–50 leads to establish a baseline. Scale a channel on lead quality and downstream behaviour, never on cheap clicks alone.</div>
+    <table>
+      <thead><tr><th style="width:8%">ID</th><th style="width:20%">Route</th><th style="width:30%">Metric</th><th style="width:9%">Unit</th><th style="width:12%">Target</th><th style="width:12%">Actual</th><th style="width:9%">Status</th></tr></thead>
+      <tbody>
+        ${METRICS.map(m=>{
+          const st = S.metrics[m.id]||{};
+          const tgt = st.tgt!==undefined ? st.tgt : m.tgt;
+          const act = st.act!==undefined ? st.act : '';
+          let badge = '<span class="st none">No data</span>';
+          if(act!=='' && tgt!==''){
+            const ok = parseFloat(act) >= parseFloat(tgt);
+            const inv = m.m.toLowerCase().includes('cost') || m.m.toLowerCase().includes('hours to');
+            const good = inv ? parseFloat(act) <= parseFloat(tgt) : ok;
+            badge = good ? '<span class="st ok">On track</span>' : '<span class="st bad">Below</span>';
+          }
+          return `<tr>
+            <td style="color:var(--faint)">${m.id}</td>
+            <td>${esc(m.r)}</td>
+            <td><b>${esc(m.m)}</b></td>
+            <td style="color:var(--muted)">${m.u}</td>
+            <td><input type="text" value="${esc(tgt)}" placeholder="—" oninput="setM('${m.id}','tgt',this.value)"></td>
+            <td><input type="text" value="${esc(act)}" placeholder="—" oninput="setM('${m.id}','act',this.value)"></td>
+            <td>${badge}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+let mT;
+function setM(id,k,v){
+  S.metrics[id]=Object.assign({},S.metrics[id],{[k]:v}); save();
+  clearTimeout(mT); mT=setTimeout(render,700);
+}
+
+/* =====================================================================
+   ADS SETUP
+   ===================================================================== */
+function viewAds(){
+  return `
+  <div class="card">
+    <h2 class="sec">Ads setup — Facebook and LinkedIn only</h2>
+    <p class="sub">Instagram, teacher groups, SEO and search ads removed. These are the campaigns you actually run.</p>
+    <div class="hint"><b>The one rule.</b> Cold Facebook traffic points at the sample pack, never at the pricing page. Warm and retargeted traffic points at the product page. LinkedIn points at the school quote.</div>
+    <table>
+      <thead><tr><th style="width:16%">Campaign</th><th style="width:12%">Channel</th><th style="width:14%">Objective</th><th style="width:30%">Audience</th><th>Destination</th></tr></thead>
+      <tbody>
+        <tr><td><b>C1 — Cold sample</b></td><td>Facebook</td><td>Leads</td><td>IB and international-school interest clusters</td><td>Sample-pack landing page (R1)</td></tr>
+        <tr><td><b>C2 — Warm retarget</b></td><td>Facebook</td><td>Conversions</td><td>Site visitors, video viewers 25%+, page engagers</td><td>Product page (R4)</td></tr>
+        <tr><td><b>C3 — Lead retarget</b></td><td>Facebook</td><td>Conversions</td><td>Downloaded the sample, has not purchased</td><td>Product page / pricing (R4)</td></tr>
+        <tr><td><b>C4 — School</b></td><td>LinkedIn</td><td>Lead gen forms</td><td>Head of Maths · DP Coordinator · Head of Secondary · Curriculum Coordinator · Academic Director</td><td>School quote page (R3)</td></tr>
+        <tr><td><b>C5 — Lookalike</b></td><td>Facebook</td><td>Leads</td><td style="color:var(--muted)">Build only after 50+ qualified conversions</td><td>Sample-pack landing page (R1)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="sec">Creative to test</h2>
+      <p class="sub">Five formats. Produce at least three teacher and two department variants.</p>
+      <table>
+        <thead><tr><th style="width:34%">Format</th><th>Why it works</th></tr></thead>
+        <tbody>
+          <tr><td><b>Screen recording 15–25s</b></td><td>One lesson across six matching assets — proves the integration claim in seconds. Strongest format.</td></tr>
+          <tr><td><b>Before / after static</b></td><td>Scattered folders on the left, one aligned sequence on the right.</td></tr>
+          <tr><td><b>Carousel</b></td><td>Presentation → teacher notes → student notes → worksheet → assessment → pacing.</td></tr>
+          <tr><td><b>Founder video</b></td><td>Direct to camera: why the kit was built, by a teacher, for teachers.</td></tr>
+          <tr><td><b>Department ad</b></td><td>Standardisation and onboarding — not personal time saving. LinkedIn primary.</td></tr>
+        </tbody>
+      </table>
     </div>
-  `;
+
+    <div class="card">
+      <h2 class="sec">Ad hooks</h2>
+      <p class="sub">Test these against each other. Primary CTA on every cold ad: "Get the free sample lesson."</p>
+      <table>
+        <thead><tr><th style="width:74%">Hook</th><th>For</th></tr></thead>
+        <tbody>
+          <tr><td>"What would you do with 100 planning hours back?"</td><td>R1</td></tr>
+          <tr><td>"New to IB Maths? Teach from a coherent course instead of assembling one."</td><td>R1</td></tr>
+          <tr><td>"A folder full of resources is not a curriculum."</td><td>R1</td></tr>
+          <tr><td>"See one lesson where the slides, notes, worksheet and assessment actually match."</td><td>R1</td></tr>
+          <tr><td>"Stop rebuilding the same course every weekend."</td><td>R4</td></tr>
+          <tr><td>"Teach the course. Stop rebuilding it."</td><td>R2 · R4</td></tr>
+          <tr><td>"A shared IB Maths course system that survives staff turnover."</td><td>R3</td></tr>
+          <tr><td>"Standardise delivery and reduce onboarding risk."</td><td>R3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">Budget phasing</h2>
+    <p class="sub">Start small. The first two weeks are for learning, not volume.</p>
+    <table>
+      <thead><tr><th style="width:16%">Phase</th><th style="width:30%">Split</th><th>What you are looking for</th></tr></thead>
+      <tbody>
+        <tr><td><b>Week 1 — Soft launch</b></td><td>100% Facebook cold (C1)</td><td>Does anyone claim the sample? Is the landing page converting?</td></tr>
+        <tr><td><b>Week 2 — Add retarget</b></td><td>70% cold / 30% retarget (C1 + C2)</td><td>Do leads open the sample and watch the product tour?</td></tr>
+        <tr><td><b>Week 3 — Add LinkedIn</b></td><td>50% cold / 30% retarget / 20% LinkedIn</td><td>Any qualified school quote requests?</td></tr>
+        <tr><td><b>Week 4+ — Scale</b></td><td>Follow the data</td><td>Cost per qualified lead and 7-day purchase rate — not cost per click.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">What not to do</h2>
+    <table><tbody>
+      <tr><td>Do not run cold traffic straight to the highest-priced kit.</td></tr>
+      <tr><td>Do not use IB logos or any wording implying official endorsement.</td></tr>
+      <tr><td>Do not claim a specific hours-saved figure as a guarantee — label it an illustrative estimate.</td></tr>
+      <tr><td>Do not spread a small budget across many countries. Start where language, payment and school-market fit are strongest.</td></tr>
+      <tr><td>Do not build lookalikes before you have real conversion data.</td></tr>
+      <tr><td>Do not use unrelated tutoring testimonials as proof for the curriculum product.</td></tr>
+    </tbody></table>
+  </div>`;
 }
 
-// ── ACTIONS ──────────────────────────────────────────────
-function sl(key, val) {
-  fd[key] = parseInt(val);
-  const sv = document.getElementById('sv-' + key);
-  const lv = document.getElementById('lv-' + key);
-  if (sv) sv.textContent = val;
-  if (lv) lv.textContent = val;
+/* =====================================================================
+   IMPORT / EXPORT / RESET
+   ===================================================================== */
+function expJSON(){
+  const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fm-launch-progress-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function impJSON(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{ S = Object.assign(blank(), JSON.parse(r.result)); save(); render();
+         document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
+         alert('Progress loaded.'); }
+    catch(err){ alert('That file could not be read.'); }
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+function resetAll(){
+  if(!confirm('Clear all progress? Export a copy first if you want to keep it.')) return;
+  S = blank(); save(); go('dash');
 }
 
-function save() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { alert('Please enter a campaign name.'); return; }
-  const budget = parseFloat(document.getElementById('f-budget').value) || 0;
-  const channel = document.getElementById('f-channel').value;
-  const status = document.getElementById('f-status').value;
-  const notes = document.getElementById('f-notes').value.trim();
-
-  if (editId) {
-    Object.assign(campaigns.find(c => c.id === editId), {name, channel, budget, status, notes, impact:fd.impact, effort:fd.effort, urgency:fd.urgency});
-    editId = null;
-  } else {
-    campaigns.push({id:nid++, name, channel, budget, impact:fd.impact, effort:fd.effort, urgency:fd.urgency, status, notes});
-  }
-  fd = blankForm();
-  renderContent();
-}
-
-function startEdit(id) {
-  const c = campaigns.find(c => c.id === id);
-  editId = id;
-  fd = {...c};
-  renderContent();
-  window.scrollTo(0, 0);
-}
-
-function cancelEdit() { editId = null; fd = blankForm(); renderContent(); }
-
-function del(id) {
-  if (!confirm('Delete this campaign?')) return;
-  campaigns = campaigns.filter(c => c.id !== id);
-  if (editId === id) { editId = null; fd = blankForm(); }
-  renderContent();
-}
-
-function showTip(e) {
-  const parts = e.target.getAttribute('data-tip').split('||');
-  const tip = document.getElementById('tip');
-  tip.innerHTML = `<strong>${parts[0]}</strong><br><span style="color:#777">${parts[1]}</span> · <span style="color:#059669;font-weight:700">${parts[2]}</span><br><span style="color:#aaa;font-size:11px">${parts[3]}</span>`;
-  tip.style.display = 'block';
-  tip.style.left = (e.clientX + 14) + 'px';
-  tip.style.top = (e.clientY - 10) + 'px';
-}
-function hideTip() { document.getElementById('tip').style.display = 'none'; }
-
-function h(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// Init
-renderContent();
+/* init */
+document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
+render();
 </script>
 </body>
 </html>
