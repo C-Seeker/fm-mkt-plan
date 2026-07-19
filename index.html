@@ -19,6 +19,39 @@ header .sub{font-size:12px;color:#A9BDD6}
 header .spacer{flex:1}
 .hbtn{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.22);padding:7px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .hbtn:hover{background:rgba(255,255,255,.22)}
+.hbtn:disabled{opacity:.4;cursor:not-allowed}
+.hbtn.g{background:#fff;color:#3C4043;border-color:#fff;display:inline-flex;align-items:center;gap:8px}
+.hbtn.g:hover{background:#F1F3F4}
+
+/* ---------- auth ---------- */
+.me{display:flex;align-items:center;gap:9px;padding:4px 11px 4px 4px;background:rgba(255,255,255,.11);border-radius:99px}
+.av{width:27px;height:27px;border-radius:50%;background:#7C9BC0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex-shrink:0;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.me .nm{font-size:12.5px;font-weight:600;line-height:1.2}
+.me .rl{font-size:10px;color:#A9BDD6;line-height:1.2}
+.banner{padding:11px 26px;font-size:12.8px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.banner.view{background:#EFF6FF;color:#1E40AF;border-bottom:1px solid #BFDBFE}
+.banner.deny{background:#FEF2F2;color:#991B1B;border-bottom:1px solid #FECACA}
+.banner.off{background:#FFFBEB;color:#92400E;border-bottom:1px solid #FDE68A}
+.banner b{font-weight:800}
+.banner .lnk{margin-left:auto;font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:none;font-size:12.8px;font-family:inherit;color:inherit}
+.ro{opacity:.55;pointer-events:none}
+.by{font-size:10.5px;color:var(--faint);white-space:nowrap}
+.by b{color:var(--muted);font-weight:700}
+.sync{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#A9BDD6}
+.dot{width:7px;height:7px;border-radius:50%;background:#4ADE80}
+.dot.slow{background:#FBBF24}
+.dot.dead{background:#F87171}
+
+/* ---------- activity feed ---------- */
+.feed{max-height:270px;overflow-y:auto}
+.fitem{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F1F4F7;font-size:12.5px}
+.fitem:last-child{border:none}
+.fitem .fav{width:23px;height:23px;border-radius:50%;background:#E2E8F0;color:#475569;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.fitem .ft{flex:1;min-width:0}
+.fitem .fw{font-weight:700}
+.fitem .fm{color:var(--muted)}
+.fitem .fd{font-size:10.5px;color:var(--faint);white-space:nowrap}
 
 /* ---------- tabs ---------- */
 nav{background:var(--card);border-bottom:1px solid var(--line);padding:0 26px;display:flex;gap:2px;position:sticky;top:0;z-index:50;overflow-x:auto}
@@ -146,14 +179,13 @@ footer{text-align:center;padding:26px;font-size:11.5px;color:var(--faint)}
 <header>
   <div>
     <h1>Full Marks — IB Maths AI/AA Launch</h1>
-    <div class="sub">Website direct · Facebook Ads · LinkedIn</div>
+    <div class="sub">Website direct · Facebook Ads · LinkedIn <span id="syncBox"></span></div>
   </div>
   <div class="spacer"></div>
-  <button class="hbtn" onclick="expJSON()">↓ Save progress</button>
-  <button class="hbtn" onclick="document.getElementById('imp').click()">↑ Load progress</button>
-  <button class="hbtn" onclick="resetAll()">Reset</button>
-  <input type="file" id="imp" accept=".json" style="display:none" onchange="impJSON(event)">
+  <div id="authBox"></div>
+  <button class="hbtn" onclick="expJSON()" title="Download a JSON backup">↓ Backup</button>
 </header>
+<div id="bannerBox"></div>
 
 <nav>
   <button class="tab on" data-t="dash" onclick="go('dash')">Dashboard</button>
@@ -167,7 +199,17 @@ footer{text-align:center;padding:26px;font-size:11.5px;color:var(--faint)}
 <main id="main"></main>
 <footer>Full Marks Education · Independently developed. Not endorsed by the International Baccalaureate Organization.</footer>
 
-<script>
+<script type="module">
+/* =====================================================================
+   CONFIGURATION
+   Paste your two Supabase values here. Both are safe to publish —
+   the anon key is protected by row-level security, not by secrecy.
+   Leave them empty and the dashboard runs in browser-only mode.
+   NEVER put the service_role key here.
+   ===================================================================== */
+const SUPABASE_URL      = 'https://evspbxhuhdaoxoewcxqh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_AKvUUNJaOLXHTCEgQh9EGQ_g6I1hsPw';
+
 /* =====================================================================
    DATA — consolidated from the strategy PDF, the 3 working documents
    and the execution workbook. Trimmed to 3 channels:
@@ -393,17 +435,29 @@ const METRICS = [
  {id:'M12',r:'Customer',m:'Buyers who open the START HERE guide',u:'%',tgt:'70'},
 ];
 
-/* ---------- state ---------- */
+/* =====================================================================
+   STATE
+   Two modes:
+     cloud  — Supabase configured. Shared, live, attributed.
+     local  — no config or offline. Browser-only, exactly as before.
+   ===================================================================== */
 const KEY = 'fm_launch_v1';
+const CLOUD = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+
 let S = load();
+let sb = null;            // supabase client
+let me = null;            // {email, name, avatar}
+let canEdit = false;      // signed in AND on the allowlist
+let feed = [];            // recent activity
+let connState = CLOUD ? 'connecting' : 'local';
 
 function blank(){
   return {
     start:'2026-07-20',
-    tasks:{},        // id -> {done, note}
-    assets:{},       // id -> {done, note}
-    metrics:{},      // id -> {tgt, act}
-    routes:{},       // id -> status
+    tasks:{},        // id -> {done, note, by, byName, at}
+    assets:{},       // id -> {done, by, byName, at}
+    metrics:{},      // id -> {tgt, act, by, byName, at}
+    routes:{},       // id -> {status, by, byName, at}  (legacy: plain string)
     filter:{day:'all', ws:'all', hide:false},
     tab:'dash'
   };
@@ -414,8 +468,248 @@ function load(){
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
+/* Routes were once stored as a bare string. Normalise on read so old
+   saved state keeps working. */
+function routeStatus(id){
+  const r = S.routes[id];
+  if(!r) return 'Not started';
+  return typeof r === 'string' ? r : (r.status || 'Not started');
+}
+function routeMeta(id){
+  const r = S.routes[id];
+  return (r && typeof r === 'object') ? r : null;
+}
+
+/* ---------- attribution ---------- */
+function stamp(obj){
+  if(!me) return obj;
+  return Object.assign({}, obj, {by:me.email, byName:me.name, at:new Date().toISOString()});
+}
+function initials(n){
+  return String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
+}
+function ago(iso){
+  if(!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+  if(s < 45) return 'just now';
+  if(s < 3600) return Math.floor(s/60) + 'm ago';
+  if(s < 86400) return Math.floor(s/3600) + 'h ago';
+  if(s < 604800) return Math.floor(s/86400) + 'd ago';
+  return new Date(iso).toLocaleDateString();
+}
+function byLine(o){
+  if(!o || !o.byName || !o.at) return '';
+  return `<span class="by">✓ <b>${esc(o.byName)}</b> · ${ago(o.at)}</span>`;
+}
+
+/* =====================================================================
+   SUPABASE — connect, authenticate, sync
+   ===================================================================== */
+async function initCloud(){
+  if(!CLOUD){ paintAuth(); return; }
+  try{
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data:{ session } } = await sb.auth.getSession();
+    await onSession(session);
+
+    sb.auth.onAuthStateChange((_e, s) => { onSession(s); });
+
+    await pullAll();
+    subscribe();
+    connState = 'live';
+  }catch(err){
+    console.warn('Cloud init failed, staying local:', err);
+    connState = 'offline';
+  }
+  paintAuth(); render();
+}
+
+async function onSession(session){
+  if(session && session.user){
+    const u = session.user;
+    me = {
+      email: (u.email||'').toLowerCase(),
+      name: u.user_metadata?.full_name || u.user_metadata?.name || (u.email||'').split('@')[0],
+      avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || ''
+    };
+    canEdit = await checkEditor();
+  } else {
+    me = null; canEdit = false;
+  }
+  paintAuth(); render();
+}
+
+async function checkEditor(){
+  if(!sb || !me) return false;
+  try{
+    const { data, error } = await sb.rpc('is_editor');
+    if(error){ console.warn('is_editor failed:', error.message); return false; }
+    return data === true;
+  }catch(e){ return false; }
+}
+
+async function signIn(){
+  if(!sb) return;
+  await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: window.location.href.split('#')[0] }
+  });
+}
+async function signOut(){
+  if(!sb) return;
+  await sb.auth.signOut();
+  me = null; canEdit = false;
+  paintAuth(); render();
+}
+
+/* ---------- pull everything ---------- */
+async function pullAll(){
+  if(!sb) return;
+  const { data, error } = await sb.from('board_state').select('*');
+  if(error){ console.warn('pull failed:', error.message); connState='offline'; return; }
+
+  const fresh = blank();
+  fresh.filter = S.filter; fresh.tab = S.tab;
+  for(const row of (data||[])){
+    const meta = { by: row.updated_by, byName: row.updated_by_name, at: row.updated_at };
+    const val = Object.assign({}, row.data, meta);
+    if(row.kind === 'task')   fresh.tasks[row.item_id]   = val;
+    if(row.kind === 'asset')  fresh.assets[row.item_id]  = val;
+    if(row.kind === 'metric') fresh.metrics[row.item_id] = val;
+    if(row.kind === 'route')  fresh.routes[row.item_id]  = val;
+  }
+  S = fresh; save();
+  await pullFeed();
+}
+
+async function pullFeed(){
+  if(!sb) return;
+  const { data, error } = await sb
+    .from('activity_log').select('*')
+    .order('created_at', {ascending:false}).limit(30);
+  if(!error) feed = data || [];
+}
+
+/* ---------- push one item ---------- */
+async function push(kind, itemId, data, label, action){
+  if(!sb || !canEdit) return;
+  const row = {
+    kind, item_id:itemId, data,
+    updated_by: me.email, updated_by_name: me.name,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await sb.from('board_state').upsert(row, {onConflict:'kind,item_id'});
+  if(error){ console.warn('push failed:', error.message); toast('Could not save — check your connection.'); return; }
+
+  if(action){
+    await sb.from('activity_log').insert({
+      kind, item_id:itemId, label, action,
+      actor_email: me.email, actor_name: me.name
+    });
+  }
+}
+
+/* ---------- realtime ---------- */
+function subscribe(){
+  if(!sb) return;
+  sb.channel('board')
+    .on('postgres_changes', {event:'*', schema:'public', table:'board_state'}, payload => {
+      const r = payload.new; if(!r) return;
+      if(r.updated_by === (me && me.email)) return;   // our own echo
+      const val = Object.assign({}, r.data, {by:r.updated_by, byName:r.updated_by_name, at:r.updated_at});
+      if(r.kind==='task')   S.tasks[r.item_id]   = val;
+      if(r.kind==='asset')  S.assets[r.item_id]  = val;
+      if(r.kind==='metric') S.metrics[r.item_id] = val;
+      if(r.kind==='route')  S.routes[r.item_id]  = val;
+      save(); render();
+    })
+    .on('postgres_changes', {event:'INSERT', schema:'public', table:'activity_log'}, payload => {
+      if(payload.new){ feed.unshift(payload.new); feed = feed.slice(0,30);
+        if(S.tab==='dash') render(); }
+    })
+    .subscribe(status => {
+      connState = (status === 'SUBSCRIBED') ? 'live' : 'offline';
+      paintSync();
+    });
+}
+
+/* ---------- header painting ---------- */
+function paintSync(){
+  const el = document.getElementById('syncBox'); if(!el) return;
+  if(!CLOUD){ el.innerHTML = ''; return; }
+  const map = {
+    live:      ['dot',      'Live'],
+    connecting:['dot slow', 'Connecting…'],
+    offline:   ['dot dead', 'Offline'],
+    local:     ['dot slow', 'Local only']
+  };
+  const [cls, label] = map[connState] || map.offline;
+  el.innerHTML = ` &nbsp;·&nbsp; <span class="sync"><span class="${cls}"></span>${label}</span>`;
+}
+
+function paintAuth(){
+  paintSync();
+  const box = document.getElementById('authBox');
+  const ban = document.getElementById('bannerBox');
+  if(!box || !ban) return;
+
+  if(!CLOUD){
+    box.innerHTML = '';
+    ban.innerHTML = `<div class="banner off">
+      <b>Browser-only mode.</b> Progress saves on this device and is not shared.
+      Follow SETUP-GUIDE.md to connect the database and enable sign-in.</div>`;
+    return;
+  }
+
+  if(!me){
+    box.innerHTML = `<button class="hbtn g" id="siBtn">
+      <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-3.9H24v7.1h12c-.2 1.9-1.5 4.7-4.4 6.6l6.7 5.2C42.2 35.5 45 30.3 45 24z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.3c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.5 28.5c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 10l7.1-5.5z"/><path fill="#EA4335" d="M24 10.6c3.2 0 5.4 1.4 6.6 2.5l6.1-5.9C33 3.9 29.9 2 24 2 15.4 2 8 6.9 4.4 14l7.1 5.5c1.8-5.3 6.7-8.9 12.5-8.9z"/></svg>
+      Sign in with Google</button>`;
+    document.getElementById('siBtn').onclick = signIn;
+    ban.innerHTML = `<div class="banner view">
+      <b>Viewing only.</b> Sign in with an approved Google account to make changes.
+      Everyone sees the same board.</div>`;
+    return;
+  }
+
+  box.innerHTML = `<div class="me">
+      <div class="av">${me.avatar ? `<img src="${esc(me.avatar)}" alt="">` : esc(initials(me.name))}</div>
+      <div><div class="nm">${esc(me.name)}</div><div class="rl">${canEdit?'Can edit':'View only'}</div></div>
+    </div>
+    <button class="hbtn" id="soBtn" style="margin-left:8px">Sign out</button>`;
+  document.getElementById('soBtn').onclick = signOut;
+
+  ban.innerHTML = canEdit ? '' : `<div class="banner deny">
+      <b>Your account is not approved for editing.</b>
+      You are signed in as ${esc(me.email)}. Ask an administrator to add you to the allowlist.</div>`;
+}
+
+/* ---------- tiny toast ---------- */
+let toastT;
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div'); t.id='toast';
+    t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1A2331;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;z-index:999;box-shadow:0 6px 22px rgba(0,0,0,.22)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(toastT); toastT = setTimeout(()=>{ t.style.display='none'; }, 2600);
+}
+
+/* ---------- write guard ---------- */
+function guard(){
+  if(!CLOUD) return true;              // local mode: always writable
+  if(!me){ toast('Sign in to make changes.'); return false; }
+  if(!canEdit){ toast('Your account is not approved for editing.'); return false; }
+  return true;
+}
+
 /* ---------- helpers ---------- */
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const canWrite = () => !CLOUD || canEdit;
 const tDone = id => !!(S.tasks[id]||{}).done;
 const aDone = id => !!(S.assets[id]||{}).done;
 const pct   = (a,b) => b ? Math.round(a/b*100) : 0;
@@ -524,6 +818,24 @@ function viewDash(){
     </div>
   </div>
 
+  ${CLOUD ? `<div class="card">
+    <h2 class="sec">Recent activity</h2>
+    <p class="sub">${feed.length ? 'Every change, and who made it. Updates live.' : 'No changes recorded yet.'}</p>
+    <div class="feed">
+      ${feed.length ? feed.map(f=>`
+        <div class="fitem">
+          <div class="fav">${esc(initials(f.actor_name))}</div>
+          <div class="ft">
+            <span class="fw">${esc(f.actor_name||'Someone')}</span>
+            <span class="fm">${esc(f.action)}</span>
+            <span class="fw">${esc(f.label||f.item_id)}</span>
+          </div>
+          <div class="fd">${ago(f.created_at)}</div>
+        </div>`).join('')
+        : '<div style="color:var(--faint);font-size:12.5px;padding:8px 0">Changes will appear here as people tick things off.</div>'}
+    </div>
+  </div>` : ''}
+
   <div class="hint"><b>Sequence matters.</b> Days 1–3 settle what you are selling and build the proof asset. Everything after depends on them. If Day 1 reveals the product is not ready, fix that before continuing.</div>
   `;
 }
@@ -554,7 +866,8 @@ function viewPlan(){
         const st = S.tasks[t.id]||{};
         const has = st.note && st.note.trim();
         return `<div class="task ${st.done?'done':''} ${has?'open':''}" id="row-${t.id}">
-          <input type="checkbox" class="cb" ${st.done?'checked':''} onchange="tog('${t.id}',this.checked)">
+          <input type="checkbox" class="cb" ${st.done?'checked':''} ${canWrite()?'':'disabled'}
+                 onchange="tog('${t.id}',this.checked)">
           <div class="body">
             <div class="tx">${esc(t.t)}</div>
             <div class="meta">
@@ -562,9 +875,11 @@ function viewPlan(){
               <span class="ws">${t.w}</span>
               <span class="deliv">→ ${esc(t.v)}</span>
               <span style="color:var(--faint)">${t.id}</span>
-              <button class="notebtn ${has?'has':''}" onclick="toggleNote('${t.id}')" title="Add a note">✎</button>
+              <button class="notebtn ${has?'has':''}" onclick="toggleNote('${t.id}')" title="Notes">✎</button>
+              ${st.done ? byLine(st) : ''}
             </div>
             <textarea class="note-in" rows="2" placeholder="Notes, links, blockers…"
+              ${canWrite()?'':'readonly'}
               oninput="setNote('${t.id}',this.value)">${esc(st.note||'')}</textarea>
           </div>
         </div>`;
@@ -593,20 +908,28 @@ function viewPlan(){
 }
 
 function tog(id, v){
-  S.tasks[id] = Object.assign({}, S.tasks[id], {done:v});
+  if(!guard()){ const cb = document.querySelector(`#row-${id} .cb`); if(cb) cb.checked = !v; return; }
+  const prev = S.tasks[id] || {};
+  S.tasks[id] = stamp(Object.assign({}, prev, {done:v}));
   save();
-  const row = document.getElementById('row-'+id);
-  if(row) row.classList.toggle('done', v);
-  // refresh counts without losing scroll
-  document.querySelectorAll('.thead').forEach((h,i)=>{
-    const d = +h.querySelector('.dn').textContent.replace('DAY ','');
-    const ds = dayStats(d);
-    h.querySelector('.tc').textContent = `${ds.done}/${ds.n} complete`;
-  });
-  if(S.filter.hide) render();
+  const t = TASKS.find(x=>x.id===id);
+  push('task', id, {done:v, note:prev.note||''}, t?t.t:id, v?'completed':'reopened');
+  render();
 }
-function toggleNote(id){ document.getElementById('row-'+id).classList.toggle('open'); }
-function setNote(id,v){ S.tasks[id]=Object.assign({},S.tasks[id],{note:v}); save(); }
+function toggleNote(id){ const el = document.getElementById('row-'+id); if(el) el.classList.toggle('open'); }
+
+let noteT = {};
+function setNote(id,v){
+  if(!guard()) return;
+  const prev = S.tasks[id] || {};
+  S.tasks[id] = stamp(Object.assign({}, prev, {note:v}));
+  save();
+  clearTimeout(noteT[id]);
+  noteT[id] = setTimeout(()=>{
+    const t = TASKS.find(x=>x.id===id);
+    push('task', id, {done:!!prev.done, note:v}, t?t.t:id, 'updated a note on');
+  }, 900);
+}
 
 /* =====================================================================
    ROUTES
@@ -637,9 +960,11 @@ function viewRoutes(){
           <div class="rrow"><div class="k">CRM tag</div><div class="v"><code style="background:#F1F4F7;padding:1px 6px;border-radius:4px;font-size:11.5px">${r.tag}</code></div></div>
           <div class="rrow"><div class="k">Success metric</div><div class="v">${esc(r.metric)}</div></div>
           <div class="rrow"><div class="k">Build status</div><div class="v">
-            <select onchange="S.routes['${r.id}']=this.value;save();render()">
-              ${['Not started','In progress','Ready'].map(o=>`<option${(S.routes[r.id]||'Not started')===o?' selected':''}>${o}</option>`).join('')}
-            </select></div></div>
+            <select ${canWrite()?'':'disabled'} onchange="setRoute('${r.id}',this.value)">
+              ${['Not started','In progress','Ready'].map(o=>`<option${routeStatus(r.id)===o?' selected':''}>${o}</option>`).join('')}
+            </select>
+            ${routeMeta(r.id) ? `<div style="margin-top:4px">${byLine(routeMeta(r.id))}</div>` : ''}
+            </div></div>
         </div>
       </div>`).join('')}
   </div>
@@ -652,6 +977,15 @@ function viewRoutes(){
       <tbody>${RULES.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td style="color:var(--muted)">${esc(r[3])}</td></tr>`).join('')}</tbody>
     </table>
   </div>`;
+}
+
+function setRoute(id, v){
+  if(!guard()){ render(); return; }
+  S.routes[id] = stamp({status:v});
+  save();
+  const r = ROUTES.find(x=>x.id===id);
+  push('route', id, {status:v}, r?`${r.id} ${r.name}`:id, `set ${v.toLowerCase()} on`);
+  render();
 }
 
 /* =====================================================================
@@ -676,12 +1010,14 @@ function viewAssets(){
       ${items.map(a=>{
         const st = S.assets[a[0]]||{};
         return `<div class="task ${st.done?'done':''}">
-          <input type="checkbox" class="cb" ${st.done?'checked':''} onchange="togA('${a[0]}',this.checked)">
+          <input type="checkbox" class="cb" ${st.done?'checked':''} ${canWrite()?'':'disabled'}
+                 onchange="togA('${a[0]}',this.checked)">
           <div class="body">
             <div class="tx">${esc(a[2])}</div>
             <div class="meta">
               <span style="color:var(--faint)">${a[0]}</span>
               ${a[3]===1?'<span class="pill crit">Required</span>':'<span class="pill med">Optional</span>'}
+              ${st.done ? byLine(st) : ''}
             </div>
           </div>
         </div>`;
@@ -689,7 +1025,14 @@ function viewAssets(){
     </div>`;
   }).join('')}`;
 }
-function togA(id,v){ S.assets[id]=Object.assign({},S.assets[id],{done:v}); save(); render(); }
+function togA(id,v){
+  if(!guard()){ render(); return; }
+  S.assets[id] = stamp(Object.assign({}, S.assets[id], {done:v}));
+  save();
+  const a = ASSETS.find(x=>x[0]===id);
+  push('asset', id, {done:v}, a?a[2]:id, v?'marked ready':'reopened');
+  render();
+}
 
 /* =====================================================================
    METRICS
@@ -719,9 +1062,9 @@ function viewMetrics(){
             <td>${esc(m.r)}</td>
             <td><b>${esc(m.m)}</b></td>
             <td style="color:var(--muted)">${m.u}</td>
-            <td><input type="text" value="${esc(tgt)}" placeholder="—" oninput="setM('${m.id}','tgt',this.value)"></td>
-            <td><input type="text" value="${esc(act)}" placeholder="—" oninput="setM('${m.id}','act',this.value)"></td>
-            <td>${badge}</td>
+            <td><input type="text" value="${esc(tgt)}" placeholder="—" ${canWrite()?'':'readonly'} oninput="setM('${m.id}','tgt',this.value)"></td>
+            <td><input type="text" value="${esc(act)}" placeholder="—" ${canWrite()?'':'readonly'} oninput="setM('${m.id}','act',this.value)"></td>
+            <td>${badge}${st.byName ? `<div style="margin-top:3px">${byLine(st)}</div>` : ''}</td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -730,8 +1073,18 @@ function viewMetrics(){
 }
 let mT;
 function setM(id,k,v){
-  S.metrics[id]=Object.assign({},S.metrics[id],{[k]:v}); save();
-  clearTimeout(mT); mT=setTimeout(render,700);
+  if(!guard()) return;
+  const prev = S.metrics[id] || {};
+  S.metrics[id] = stamp(Object.assign({}, prev, {[k]:v}));
+  save();
+  clearTimeout(mT);
+  mT = setTimeout(()=>{
+    const cur = S.metrics[id] || {};
+    const m = METRICS.find(x=>x.id===id);
+    push('metric', id, {tgt:cur.tgt??'', act:cur.act??''}, m?m.m:id,
+         k==='act' ? 'recorded a result for' : 'set a target for');
+    render();
+  }, 800);
 }
 
 /* =====================================================================
@@ -821,33 +1174,34 @@ function viewAds(){
    IMPORT / EXPORT / RESET
    ===================================================================== */
 function expJSON(){
-  const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
+  const payload = { exported: new Date().toISOString(), board: S, activity: feed };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'fm-launch-progress-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'fm-launch-backup-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
 }
-function impJSON(e){
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try{ S = Object.assign(blank(), JSON.parse(r.result)); save(); render();
-         document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
-         alert('Progress loaded.'); }
-    catch(err){ alert('That file could not be read.'); }
-  };
-  r.readAsText(f);
-  e.target.value='';
-}
-function resetAll(){
-  if(!confirm('Clear all progress? Export a copy first if you want to keep it.')) return;
-  S = blank(); save(); go('dash');
-}
 
-/* init */
+/* =====================================================================
+   EXPOSE — inline handlers need these on window because this is a module
+   ===================================================================== */
+Object.defineProperty(window, 'S', { get: () => S });
+Object.assign(window, {
+  go, tog, togA, setM, setNote, toggleNote, setRoute, expJSON,
+  signIn, signOut, save, render
+});
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
 document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
+paintAuth();
 render();
+initCloud();
+
+// Refresh relative timestamps every minute.
+setInterval(()=>{ if(S.tab==='dash' && CLOUD) render(); }, 60000);
 </script>
 </body>
 </html>
