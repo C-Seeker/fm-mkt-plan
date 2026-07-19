@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Plan Matrix Planner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #111; font-size: 14px; }
+
+    header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 17px; font-weight: 800; }
+    header span { font-size: 12px; color: #888; }
+
+    .tabs { display: flex; gap: 3px; padding: 12px 24px 0; background: #fff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+    .tab-btn { padding: 9px 15px; border: none; background: none; border-radius: 6px 6px 0 0; cursor: pointer; color: #666; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; transition: all .15s; font-family: inherit; }
+    .tab-btn:hover { background: #f3f4f6; }
+    .tab-btn.active { color: #111; border-bottom-color: #3b82f6; font-weight: 700; }
+
+    .content { padding: 24px; max-width: 900px; margin: 0 auto; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .05em; }
+    input, select { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; color: #111; font-size: 13px; font-family: inherit; outline: none; }
+    input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #3b82f620; }
+
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    input[type=range] { flex: 1; padding: 0; border: none; accent-color: #3b82f6; cursor: pointer; }
+    .slider-val { width: 24px; text-align: center; font-weight: 800; color: #3b82f6; font-size: 15px; }
+
+    .btn { padding: 9px 18px; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; }
+    .btn-primary { background: #3b82f6; color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-sm { padding: 5px 11px; font-size: 12px; }
+    .btn-ghost { background: #f3f4f6; color: #111; }
+    .btn-ghost:hover { background: #e5e7eb; }
+    .btn-red { background: #fee2e2; color: #dc2626; }
+    .btn-red:hover { background: #fecaca; }
+
+    .c-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .c-card { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border: 1px solid #e5e7eb; border-radius: 9px; background: #fff; }
+    .c-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .c-name { font-weight: 600; flex: 1; font-size: 13px; }
+    .c-meta { font-size: 11px; color: #888; margin-top: 2px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; }
+
+    .matrix-wrap { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
+    .matrix-wrap svg { width: 100%; display: block; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .budget-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .bc { padding: 15px; border: 1px solid #e5e7eb; border-radius: 9px; background: #fff; }
+    .bc .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 4px; }
+    .bc .val { font-size: 22px; font-weight: 800; }
+
+    .bar-rows { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { width: 110px; font-size: 12px; font-weight: 600; text-align: right; flex-shrink: 0; }
+    .bar-track { flex: 1; background: #f3f4f6; border-radius: 99px; height: 20px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
+    .bar-amt { width: 70px; font-size: 12px; font-weight: 700; color: #666; }
+
+    .sec-title { font-size: 15px; font-weight: 800; margin-bottom: 5px; }
+    .sec-sub { font-size: 12px; color: #888; margin-bottom: 14px; }
+    .section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+    .form-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .empty { text-align: center; padding: 36px; color: #ccc; font-size: 13px; }
+
+    .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .alloc-item { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
+
+    .tip { position: fixed; background: #fff; border: 1px solid #e5e7eb; border-radius: 9px; padding: 9px 12px; font-size: 12px; pointer-events: none; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,.12); display: none; white-space: nowrap; }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .budget-cards { grid-template-columns: 1fr 1fr; }
+      .budget-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📊 Marketing Plan Matrix Planner</h1>
+    <span>Priority · Effort/Impact · Budget — all channels</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="campaigns" onclick="setTab('campaigns')">📋 Campaigns</button>
+  <button class="tab-btn" data-tab="priority" onclick="setTab('priority')">🎯 Priority Matrix</button>
+  <button class="tab-btn" data-tab="effort" onclick="setTab('effort')">💡 Effort vs Impact</button>
+  <button class="tab-btn" data-tab="budget" onclick="setTab('budget')">💰 Budget</button>
+</div>
+
+<div class="content" id="content"></div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ── CONSTANTS ───────────────────────────────────────────
+const CHANNELS = ['Social Media','Paid Ads','SEO','Content','Email','Events','PR','Influencer'];
+const CH_COLOR = {
+  'Social Media':'#3b82f6','Paid Ads':'#f97316','SEO':'#10b981','Content':'#8b5cf6',
+  'Email':'#06b6d4','Events':'#f59e0b','PR':'#ec4899','Influencer':'#84cc16'
+};
+const STATUSES = ['Planning','Active','Paused','Completed'];
+const ST_COLOR = { Planning:'#3b82f6', Active:'#10b981', Paused:'#f59e0b', Completed:'#6b7280' };
+
+// ── STATE ───────────────────────────────────────────────
+let campaigns = [
+  {id:1,name:'Instagram Reels Campaign',channel:'Social Media',budget:5000,impact:4,effort:2,urgency:3,status:'Active',notes:'Q3 brand awareness'},
+  {id:2,name:'Google Search Ads',channel:'Paid Ads',budget:15000,impact:5,effort:3,urgency:5,status:'Active',notes:'Core revenue driver'},
+  {id:3,name:'SEO Blog Revamp',channel:'SEO',budget:3000,impact:5,effort:5,urgency:2,status:'Planning',notes:'Long-term organic growth'},
+  {id:4,name:'Monthly Newsletter',channel:'Email',budget:800,impact:3,effort:1,urgency:4,status:'Active',notes:'Customer retention'},
+  {id:5,name:'Annual Trade Show',channel:'Events',budget:20000,impact:4,effort:5,urgency:3,status:'Planning',notes:'B2B lead gen'},
+  {id:6,name:'Influencer Collab',channel:'Influencer',budget:8000,impact:3,effort:2,urgency:2,status:'Planning',notes:'New audience reach'},
+  {id:7,name:'Press Release – Launch',channel:'PR',budget:2500,impact:4,effort:2,urgency:5,status:'Active',notes:'Product launch coverage'},
+  {id:8,name:'YouTube Tutorial Series',channel:'Content',budget:6000,impact:4,effort:4,urgency:1,status:'Planning',notes:'Education-led growth'},
+];
+let nid = 9;
+let tab = 'campaigns';
+let editId = null;
+let fd = blankForm();
+
+function blankForm() {
+  return {name:'',channel:'Social Media',budget:'',impact:3,effort:3,urgency:3,status:'Planning',notes:''};
+}
+
+// ── TAB ─────────────────────────────────────────────────
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  renderContent();
+  window.scrollTo(0, 0);
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function renderContent() {
+  const el = document.getElementById('content');
+  if (tab === 'campaigns') el.innerHTML = tplCampaigns();
+  else if (tab === 'priority') el.innerHTML = tplMatrix('priority');
+  else if (tab === 'effort') el.innerHTML = tplMatrix('effort');
+  else if (tab === 'budget') el.innerHTML = tplBudget();
+}
+
+// ── CAMPAIGNS TAB ────────────────────────────────────────
+function tplCampaigns() {
+  const isEdit = !!editId;
+  return `
+    <div class="sec-title">${isEdit ? '✏️ Edit Campaign' : '➕ Add Campaign'}</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Campaign Name</label>
+        <input id="f-name" value="${h(fd.name)}" placeholder="e.g. Summer Sale Ads">
+      </div>
+      <div class="form-group">
+        <label>Channel</label>
+        <select id="f-channel">${CHANNELS.map(c=>`<option ${fd.channel===c?'selected':''}>${c}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Budget (USD)</label>
+        <input id="f-budget" type="number" min="0" value="${fd.budget}" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status">${STATUSES.map(s=>`<option ${fd.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <input id="f-notes" value="${h(fd.notes)}" placeholder="Optional notes...">
+      </div>
+      <div class="form-group full">
+        <label>Impact — business value (<span id="lv-impact">${fd.impact}</span>/5)</label>
+        <div class="slider-row">
+          <input type="range" min="1" max="5" value="${fd.impact}" oninput="sl('impact',this.value)">
+          <span class="slider-val" id="sv-impact">${fd.impact}</span>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Effort — resources needed (<span id="lv-effort">${fd.effort}</span>/5)</label>
+        <div class="slider-row">
+          <input type="range" min="1" max="5" value="${fd.effort}" oninput="sl('effort',this.value)">
+          <span class="slider-val" id="sv-effort">${fd.effort}</span>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Urgency — time sensitivity (<span id="lv-urgency">${fd.urgency}</span>/5)</label>
+        <div class="slider-row">
+          <input type="range" min="1" max="5" value="${fd.urgency}" oninput="sl('urgency',this.value)">
+          <span class="slider-val" id="sv-urgency">${fd.urgency}</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="save()">${isEdit ? 'Update Campaign' : 'Add Campaign'}</button>
+      ${isEdit ? `<button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>` : ''}
+    </div>
+    <hr class="section-divider">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px">All Campaigns (${campaigns.length})</div>
+    <div class="c-list">
+      ${campaigns.length === 0
+        ? '<div class="empty">No campaigns yet. Add one above!</div>'
+        : campaigns.map(c => `
+          <div class="c-card">
+            <div class="c-dot" style="background:${CH_COLOR[c.channel]}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <span class="c-name">${h(c.name)}</span>
+                <span class="tag" style="background:${ST_COLOR[c.status]}20;color:${ST_COLOR[c.status]}">${c.status}</span>
+                <span style="font-size:11px;color:#999">${c.channel}</span>
+              </div>
+              <div class="c-meta">Impact ${c.impact}/5 · Effort ${c.effort}/5 · Urgency ${c.urgency}/5${c.notes ? ' · ' + h(c.notes) : ''}</div>
+            </div>
+            <div style="font-weight:800;color:#059669;font-size:13px;white-space:nowrap;margin-right:4px">$${c.budget.toLocaleString()}</div>
+            <button class="btn btn-ghost btn-sm" onclick="startEdit(${c.id})">Edit</button>
+            <button class="btn btn-red btn-sm" onclick="del(${c.id})">✕</button>
+          </div>
+        `).join('')}
+    </div>
+  `;
+}
+
+// ── MATRIX TAB ───────────────────────────────────────────
+function tplMatrix(type) {
+  const W = 620, H = 480, P = 70;
+  const PW = W - P * 2, PH = H - P * 2;
+  const CX = P + PW / 2, CY = P + PH / 2;
+  const isPri = type === 'priority';
+  const xKey = isPri ? 'urgency' : 'effort';
+
+  // Quadrants: [top-left, top-right, bottom-left, bottom-right]
+  const Q = isPri ? [
+    {label:'SCHEDULE',sub:'Important · Plan It',bg:'#dbeafe',tc:'#1d4ed8'},
+    {label:'DO NOW',sub:'Act Immediately',bg:'#fee2e2',tc:'#dc2626'},
+    {label:'DROP / SKIP',sub:'Low Value',bg:'#f3f4f6',tc:'#6b7280'},
+    {label:'DELEGATE',sub:'Hand It Off',bg:'#fef9c3',tc:'#b45309'},
+  ] : [
+    {label:'QUICK WINS',sub:'Low Effort · High Return',bg:'#dcfce7',tc:'#15803d'},
+    {label:'BIG BETS',sub:'Worth the Investment',bg:'#dbeafe',tc:'#1d4ed8'},
+    {label:'FILL-INS',sub:'Easy but Low Value',bg:'#fef9c3',tc:'#b45309'},
+    {label:'AVOID',sub:'High Cost · Low Return',bg:'#f3f4f6',tc:'#6b7280'},
+  ];
+
+  const qr = [
+    {x:P, y:P, w:PW/2, h:PH/2},
+    {x:CX, y:P, w:PW/2, h:PH/2},
+    {x:P, y:CY, w:PW/2, h:PH/2},
+    {x:CX, y:CY, w:PW/2, h:PH/2},
+  ];
+  const lc = [
+    {x:P+PW/4, y:P+18}, {x:CX+PW/4, y:P+18},
+    {x:P+PW/4, y:CY+18}, {x:CX+PW/4, y:CY+18},
+  ];
+
+  function tx(v) { return P + ((v-1)/4) * PW; }
+  function ty(v) { return P + PH - ((v-1)/4) * PH; }
+
+  const maxB = Math.max(...campaigns.map(c => c.budget), 1);
+  const usedChannels = [...new Set(campaigns.map(c => c.channel))];
+
+  const rects = Q.map((q,i) =>
+    `<rect x="${qr[i].x}" y="${qr[i].y}" width="${qr[i].w}" height="${qr[i].h}" fill="${q.bg}"/>`
+  ).join('');
+
+  const labels = Q.map((q,i) => `
+    <text x="${lc[i].x}" y="${lc[i].y}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${q.tc}" opacity=".9">${q.label}</text>
+    <text x="${lc[i].x}" y="${lc[i].y+14}" text-anchor="middle" font-size="9.5" fill="${q.tc}" opacity=".6">${q.sub}</text>
+  `).join('');
+
+  const ticks = [1,2,3,4,5].map(v => `
+    <text x="${tx(v).toFixed(1)}" y="${P+PH+15}" text-anchor="middle" font-size="10" fill="#bbb">${v}</text>
+    <text x="${P-9}" y="${ty(v).toFixed(1)+4}" text-anchor="end" font-size="10" fill="#bbb">${v}</text>
+  `).join('');
+
+  const dots = campaigns.map(c => {
+    const cx = tx(c[xKey]), cy = ty(c.impact);
+    const r = Math.max(7, 7 + (c.budget / maxB) * 17);
+    const tip = `${h(c.name)}||${c.channel}||$${c.budget.toLocaleString()}||Impact:${c.impact} Effort:${c.effort} Urgency:${c.urgency}`;
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
+      fill="${CH_COLOR[c.channel]}bb" stroke="${CH_COLOR[c.channel]}" stroke-width="1.5"
+      style="cursor:pointer" data-tip="${tip}"
+      onmouseenter="showTip(event)" onmouseleave="hideTip()"/>`;
+  }).join('');
+
+  const xAxisLabel = isPri ? 'Urgency (1 = Low  →  5 = High)' : 'Effort (1 = Low  →  5 = High)';
+
+  return `
+    <div class="sec-title">${isPri ? '🎯 Priority Matrix — Urgency vs Impact' : '💡 Effort vs Impact Matrix'}</div>
+    <div class="sec-sub">${isPri
+      ? 'Plot campaigns by how urgent and impactful they are. Bubble size = budget.'
+      : 'Find quick wins and big bets across your marketing mix. Bubble size = budget.'
+    }</div>
+    <div class="matrix-wrap">
+      <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        ${rects}
+        ${labels}
+        <line x1="${P}" y1="${CY}" x2="${P+PW}" y2="${CY}" stroke="#ccc" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="${CX}" y1="${P}" x2="${CX}" y2="${P+PH}" stroke="#ccc" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="${P}" y1="${P+PH}" x2="${P+PW}" y2="${P+PH}" stroke="#bbb" stroke-width="1.5"/>
+        <line x1="${P}" y1="${P}" x2="${P}" y2="${P+PH}" stroke="#bbb" stroke-width="1.5"/>
+        ${ticks}
+        <text x="${P+PW/2}" y="${H-5}" text-anchor="middle" font-size="12" font-weight="700" fill="#555">${xAxisLabel}</text>
+        <text x="13" y="${P+PH/2}" text-anchor="middle" font-size="12" font-weight="700" fill="#555" transform="rotate(-90,13,${P+PH/2})">Impact (1 = Low  →  5 = High)</text>
+        ${dots}
+      </svg>
+    </div>
+    <div class="legend">
+      ${usedChannels.map(ch => `
+        <div class="legend-item">
+          <div class="legend-dot" style="background:${CH_COLOR[ch]}"></div>
+          ${ch} (${campaigns.filter(c=>c.channel===ch).length})
+        </div>`).join('')}
+      <span style="font-size:11px;color:#ccc;margin-left:auto">● bubble size = budget</span>
+    </div>
+  `;
+}
+
+// ── BUDGET TAB ───────────────────────────────────────────
+function tplBudget() {
+  const total = campaigns.reduce((s,c) => s+c.budget, 0);
+  const active = campaigns.filter(c=>c.status==='Active').reduce((s,c) => s+c.budget, 0);
+  const planning = campaigns.filter(c=>c.status==='Planning').reduce((s,c) => s+c.budget, 0);
+
+  const byChannel = {};
+  CHANNELS.forEach(ch => { byChannel[ch] = campaigns.filter(c=>c.channel===ch).reduce((s,c) => s+c.budget, 0); });
+  const byStatus = {};
+  STATUSES.forEach(s => { byStatus[s] = campaigns.filter(c=>c.status===s).reduce((s2,c) => s2+c.budget, 0); });
+
+  const maxCh = Math.max(...Object.values(byChannel), 1);
+  const sortedCh = Object.entries(byChannel).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
+
+  return `
+    <div class="sec-title">💰 Budget Dashboard</div>
+    <div class="budget-cards">
+      <div class="bc">
+        <div class="lbl">Total Budget</div>
+        <div class="val">$${total.toLocaleString()}</div>
+      </div>
+      <div class="bc">
+        <div class="lbl">Active Spend</div>
+        <div class="val" style="color:#10b981">$${active.toLocaleString()}</div>
+      </div>
+      <div class="bc">
+        <div class="lbl">Pipeline</div>
+        <div class="val" style="color:#3b82f6">$${planning.toLocaleString()}</div>
+      </div>
+    </div>
+    <div class="budget-grid">
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px">Budget by Channel</div>
+        <div class="bar-rows">
+          ${sortedCh.map(([ch,v]) => `
+            <div class="bar-row">
+              <div class="bar-label">${ch}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${((v/maxCh)*100).toFixed(1)}%;background:${CH_COLOR[ch]}"></div>
+              </div>
+              <div class="bar-amt">$${v.toLocaleString()}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="font-weight:700;font-size:13px;margin:20px 0 12px">Budget by Status</div>
+        <div class="bar-rows">
+          ${STATUSES.filter(s=>byStatus[s]>0).map(s => `
+            <div class="bar-row">
+              <div class="bar-label">${s}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${total?((byStatus[s]/total)*100).toFixed(1):0}%;background:${ST_COLOR[s]}"></div>
+              </div>
+              <div class="bar-amt">$${byStatus[s].toLocaleString()}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px">Campaign Breakdown</div>
+        ${campaigns.length === 0
+          ? '<div class="empty">No campaigns yet.</div>'
+          : campaigns.sort((a,b) => b.budget-a.budget).map(c => `
+            <div class="alloc-item">
+              <div style="width:9px;height:9px;border-radius:50%;background:${CH_COLOR[c.channel]};flex-shrink:0"></div>
+              <span style="flex:1">${h(c.name)}</span>
+              <span style="font-weight:800;color:#059669">$${c.budget.toLocaleString()}</span>
+              <span style="color:#ccc;width:34px;text-align:right">${total?((c.budget/total)*100).toFixed(0):0}%</span>
+            </div>
+          `).join('')}
+        <div style="border-top:1px solid #e5e7eb;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:800;font-size:13px">
+          <span>Total</span>
+          <span style="color:#059669">$${total.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── ACTIONS ──────────────────────────────────────────────
+function sl(key, val) {
+  fd[key] = parseInt(val);
+  const sv = document.getElementById('sv-' + key);
+  const lv = document.getElementById('lv-' + key);
+  if (sv) sv.textContent = val;
+  if (lv) lv.textContent = val;
+}
+
+function save() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Please enter a campaign name.'); return; }
+  const budget = parseFloat(document.getElementById('f-budget').value) || 0;
+  const channel = document.getElementById('f-channel').value;
+  const status = document.getElementById('f-status').value;
+  const notes = document.getElementById('f-notes').value.trim();
+
+  if (editId) {
+    Object.assign(campaigns.find(c => c.id === editId), {name, channel, budget, status, notes, impact:fd.impact, effort:fd.effort, urgency:fd.urgency});
+    editId = null;
+  } else {
+    campaigns.push({id:nid++, name, channel, budget, impact:fd.impact, effort:fd.effort, urgency:fd.urgency, status, notes});
+  }
+  fd = blankForm();
+  renderContent();
+}
+
+function startEdit(id) {
+  const c = campaigns.find(c => c.id === id);
+  editId = id;
+  fd = {...c};
+  renderContent();
+  window.scrollTo(0, 0);
+}
+
+function cancelEdit() { editId = null; fd = blankForm(); renderContent(); }
+
+function del(id) {
+  if (!confirm('Delete this campaign?')) return;
+  campaigns = campaigns.filter(c => c.id !== id);
+  if (editId === id) { editId = null; fd = blankForm(); }
+  renderContent();
+}
+
+function showTip(e) {
+  const parts = e.target.getAttribute('data-tip').split('||');
+  const tip = document.getElementById('tip');
+  tip.innerHTML = `<strong>${parts[0]}</strong><br><span style="color:#777">${parts[1]}</span> · <span style="color:#059669;font-weight:700">${parts[2]}</span><br><span style="color:#aaa;font-size:11px">${parts[3]}</span>`;
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 14) + 'px';
+  tip.style.top = (e.clientY - 10) + 'px';
+}
+function hideTip() { document.getElementById('tip').style.display = 'none'; }
+
+function h(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+renderContent();
+</script>
+</body>
+</html>
