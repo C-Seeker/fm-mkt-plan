@@ -15,6 +15,7 @@ create table if not exists public.custom_tasks (
                     check (priority in ('Critical','High','Medium')),
   title           text not null check (length(trim(title)) > 0),
   deliverable     text,
+  guidance        text,
   archived        boolean not null default false,
   created_by      text,
   created_by_name text,
@@ -24,6 +25,9 @@ create table if not exists public.custom_tasks (
 
 create index if not exists custom_tasks_day_idx
   on public.custom_tasks (day) where archived = false;
+
+-- If the table already exists from an earlier run, add the guidance column.
+alter table public.custom_tasks add column if not exists guidance text;
 
 
 -- ---------------------------------------------------------------------

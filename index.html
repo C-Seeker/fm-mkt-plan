@@ -162,7 +162,8 @@ select:focus,input:focus,textarea:focus{border-color:var(--blue)}
 .af-f{display:flex;flex-direction:column;gap:4px}
 .af-f.af-wide{grid-column:1/-1}
 .af-f label{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-.af-f input,.af-f select{padding:7px 9px;font-size:13px}
+.af-f input,.af-f select,.af-f textarea{padding:7px 9px;font-size:13px}
+.af-f textarea{resize:vertical;line-height:1.5;font-family:inherit}
 .af-act{display:flex;align-items:center;gap:9px;margin-top:12px}
 .btn-add{background:var(--blue);color:#fff;border:none;padding:8px 17px;border-radius:7px;
   font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -269,110 +270,182 @@ const SUPABASE_ANON_KEY = 'sb_publishable_AKvUUNJaOLXHTCEgQh9EGQ_g6I1hsPw';
 
 const TASKS = [
  // Day 1 — Offer & product truth
- {id:'D1-01',d:1,w:'Product',p:'Critical',n:'Audit AI assets',t:'Inventory every IB Maths AI asset by topic, level and asset type',v:'Verified AI inventory'},
- {id:'D1-02',d:1,w:'Product',p:'Critical',n:'Audit AA assets',t:'Inventory every IB Maths AA asset by topic, level and asset type',v:'Verified AA inventory'},
- {id:'D1-03',d:1,w:'Product',p:'Critical',n:'Gap and blocker log',t:'Log missing assets, duplicates, outdated versions and launch blockers',v:'Gap and blocker list'},
+ {id:'D1-01',d:1,w:'Product',p:'Critical',n:'Audit AI assets',t:'Inventory every IB Maths AI asset by topic, level and asset type',v:'Verified AI inventory',
+  g:'Go topic by topic and level by level. For each one record what actually exists: presentation, student notes, teacher notes, worksheet, answer key, assessment. A spreadsheet is fine. The output is not a feeling that you have a lot of material — it is a grid where every gap is visible.'},
+ {id:'D1-02',d:1,w:'Product',p:'Critical',n:'Audit AA assets',t:'Inventory every IB Maths AA asset by topic, level and asset type',v:'Verified AA inventory',
+  g:'Same method as the AI audit. Do them separately, because the answer is often different: one curriculum is usually further ahead than the other, and that difference decides what you launch first.'},
+ {id:'D1-03',d:1,w:'Product',p:'Critical',n:'Gap and blocker log',t:'Log missing assets, duplicates, outdated versions and launch blockers',v:'Gap and blocker list',
+  g:'List anything that would embarrass you if a buyer found it: missing answer keys, topics with no assessment, files you cannot edit, drafts mixed with finals. A blocker stops launch. A gap can ship, but only if the product page is honest about it.'},
  {id:'D1-04',d:1,w:'Offer',p:'Critical',n:'Launch scope',t:'Choose launch scope: AI, AA or both — and exactly which levels are included',v:'Approved launch scope',
   g:'There are four possible products: AI SL, AI HL, AA SL, AA HL. Decide which you can honestly sell as complete, based on the Day 1 audit. Everything downstream depends on this — the sample lesson, the product page claims, the Stripe products, the ad copy. The finished answer is a sentence you could paste onto the product page, e.g. "AI SL and HL complete; AA SL only — AA HL ships later." Narrow and true beats broad and shaky. Launch one curriculum at a time if quality is uneven; if both are ready, use separate product pages.'},
  {id:'D1-05',d:1,w:'Offer',p:'Critical',n:'Licence boundaries',t:'Define individual and department licence boundaries',v:'Licence framework',
   g:'Individual = one named teacher, their own classroom, no sharing with colleagues. Department = a named school and an agreed teacher count, internal use only, no transfer to another school. Write the number of teachers a department licence covers, and what happens when they exceed it.'},
- {id:'D1-06',d:1,w:'Offer',p:'Critical',n:'Pricing decision',t:'Set founding price, planned standard price and topic-kit downsell',v:'Price decision sheet'},
- {id:'D1-07',d:1,w:'Offer',p:'High',n:'Edition and update policy',t:'Write the current-edition, 12-month update and 2029 upgrade promise',v:'Edition and update policy'},
+ {id:'D1-06',d:1,w:'Offer',p:'Critical',n:'Pricing decision',t:'Set founding price, planned standard price and topic-kit downsell',v:'Price decision sheet',
+  g:'Set three numbers: the founding price, the standard price, and the date the founding price ends. The founding price buys testimonials and usage feedback, so it has to be genuinely limited — a discount with no end date is simply your price.'},
+ {id:'D1-07',d:1,w:'Offer',p:'High',n:'Edition and update policy',t:'Write the current-edition, 12-month update and 2029 upgrade promise',v:'Edition and update policy',
+  g:'Three promises, in writing: which edition they are buying, how long corrections are included, and what happens when the 2027 syllabus arrives. Vague answers here turn into refund requests later.'},
  {id:'D1-08',d:1,w:'Funnel',p:'Critical',n:'Sample lesson and routing',t:'Select the sample lesson and approve the 4-route routing rule',v:'Sample choice + routing matrix',
   g:'Pick a lesson that is recognisably IB-specific, shows student and teacher versions plus matching assessment, and needs no unusual software. The test: would a teacher genuinely use it tomorrow? The routing rule is on the Funnel Routes tab — cold Facebook traffic goes to the sample, direct and warm traffic goes to the product page, LinkedIn goes to the school quote.'},
- {id:'D1-09',d:1,w:'Offer',p:'High',n:'Claims list',t:'Write the claims list: approved / needs evidence / prohibited',v:'Claims list'},
+ {id:'D1-09',d:1,w:'Offer',p:'High',n:'Claims list',t:'Write the claims list: approved / needs evidence / prohibited',v:'Claims list',
+  g:'Three columns. Approved: you can prove it. Needs evidence: probably true but unsupported. Prohibited: anything implying IB endorsement or guaranteeing outcomes. Everyone who writes copy works from this list.'},
 
  // Day 2 — Packaging
- {id:'D2-01',d:2,w:'Product',p:'Critical',n:'Folder structure',t:'Standardise the customer-facing folder tree and file naming',v:'Final folder structure'},
- {id:'D2-02',d:2,w:'Product',p:'Critical',n:'Clean the package',t:'Remove drafts, internal notes, duplicates and superseded versions',v:'Clean master package'},
- {id:'D2-03',d:2,w:'Product',p:'Critical',n:'START HERE guide',t:'Create the START HERE guide',v:'START HERE guide'},
- {id:'D2-04',d:2,w:'Product',p:'High',n:'Course map',t:'Create the course map and pacing overview',v:'Course map / pacing file'},
- {id:'D2-05',d:2,w:'Product',p:'Medium',n:'Version and changelog',t:'Create the edition number and changelog',v:'Version + changelog file'},
- {id:'D2-06',d:2,w:'Offer',p:'Critical',n:'Licence files',t:'Write plain-English individual and department licence files',v:'Licence documents'},
- {id:'D2-07',d:2,w:'Commerce',p:'High',n:'Delivery test',t:'Set up secure delivery prototype and run a dummy access test',v:'Delivery prototype'},
+ {id:'D2-01',d:2,w:'Product',p:'Critical',n:'Folder structure',t:'Standardise the customer-facing folder tree and file naming',v:'Final folder structure',
+  g:'Number the folders so they sort in teaching order rather than alphabetically. A buyer should be able to understand the sequence from the folder names alone, without opening a single file.'},
+ {id:'D2-02',d:2,w:'Product',p:'Critical',n:'Clean the package',t:'Remove drafts, internal notes, duplicates and superseded versions',v:'Clean master package',
+  g:'Delete anything you would not want a stranger to open — v2_FINAL_final files, internal notes, half-finished topics. One confusing file undoes the impression that this is a finished system.'},
+ {id:'D2-03',d:2,w:'Product',p:'Critical',n:'START HERE guide',t:'Create the START HERE guide',v:'START HERE guide',
+  g:'One page. What this is, which file to open first, how the pieces fit together, where to get help. Write it assuming they downloaded at 9pm and teach at 8am.'},
+ {id:'D2-04',d:2,w:'Product',p:'High',n:'Course map',t:'Create the course map and pacing overview',v:'Course map / pacing file',
+  g:'One page showing the whole course in sequence with rough timing. This is the single asset that makes it a curriculum rather than a folder — a buyer should see their whole year on one sheet.'},
+ {id:'D2-05',d:2,w:'Product',p:'Medium',n:'Version and changelog',t:'Create the edition number and changelog',v:'Version + changelog file',
+  g:'An edition number on the package and a dated list of what changed. When you fix an error in three months, this is how buyers know what changed and whether they need to download again.'},
+ {id:'D2-06',d:2,w:'Offer',p:'Critical',n:'Licence files',t:'Write plain-English individual and department licence files',v:'Licence documents',
+  g:'Plain English, not legalese. What one teacher may do, what a department may do, what nobody may do. If a buyer has to email you to ask what it means, rewrite it.'},
+ {id:'D2-07',d:2,w:'Commerce',p:'High',n:'Delivery test',t:'Set up secure delivery prototype and run a dummy access test',v:'Delivery prototype',
+  g:'Buy your own product, with a different email, on a different device. Time how long it takes from payment to opening the first file. Anything confusing at this step costs you support hours forever.'},
 
  // Day 3 — Sample pack
- {id:'D3-01',d:3,w:'Product',p:'Critical',n:'Sample presentation',t:'Prepare the sample lesson presentation',v:'Sample presentation'},
- {id:'D3-02',d:3,w:'Product',p:'Critical',n:'Student notes',t:'Prepare matching student notes',v:'Sample student notes'},
- {id:'D3-03',d:3,w:'Product',p:'Critical',n:'Teacher notes',t:'Prepare matching teacher notes with answers and guidance',v:'Sample teacher notes'},
- {id:'D3-04',d:3,w:'Product',p:'Critical',n:'Practice and assessment',t:'Prepare worksheet, answer key and mini-assessment',v:'Practice + assessment set'},
- {id:'D3-05',d:3,w:'Product',p:'High',n:'Implementation guide',t:'Create the one-page implementation guide and full-course context map',v:'Implementation guide'},
- {id:'D3-06',d:3,w:'Creative',p:'High',n:'Package the sample',t:'Package the sample folder, cover image and downloadable archive',v:'Final sample pack'},
+ {id:'D3-01',d:3,w:'Product',p:'Critical',n:'Sample presentation',t:'Prepare the sample lesson presentation',v:'Sample presentation',
+  g:'This is the lesson a teacher will judge the entire kit by. Use your strongest topic, not your most typical one.'},
+ {id:'D3-02',d:3,w:'Product',p:'Critical',n:'Student notes',t:'Prepare matching student notes',v:'Sample student notes',
+  g:'The student-facing version of the same lesson. The point is to demonstrate alignment — same notation, same examples, same order as the presentation.'},
+ {id:'D3-03',d:3,w:'Product',p:'Critical',n:'Teacher notes',t:'Prepare matching teacher notes with answers and guidance',v:'Sample teacher notes',
+  g:'The same notes with answers, timing, common misconceptions and what to emphasise. This is the asset that makes a new-to-IB teacher feel safe.'},
+ {id:'D3-04',d:3,w:'Product',p:'Critical',n:'Practice and assessment',t:'Prepare worksheet, answer key and mini-assessment',v:'Practice + assessment set',
+  g:'Worksheet, answer key and a short exit ticket, all matched to the lesson. The complete loop is the entire product claim — never ship the sample without the assessment.'},
+ {id:'D3-05',d:3,w:'Product',p:'High',n:'Implementation guide',t:'Create the one-page implementation guide and full-course context map',v:'Implementation guide',
+  g:'One page: lesson order, timing, differentiation, technology notes, and where this lesson sits within the full course.'},
+ {id:'D3-06',d:3,w:'Creative',p:'High',n:'Package the sample',t:'Package the sample folder, cover image and downloadable archive',v:'Final sample pack',
+  g:'Numbered files, a cover image, one download. Add a discreet footer linking back to the product page — visible, but not so intrusive that it cannot be used in a classroom.'},
  {id:'D3-07',d:3,w:'Product',p:'Critical',n:'Teacher-use test',t:'Run an independent teacher-use test and correct issues found',v:'Teacher QA sign-off',
   g:'Give the sample pack to two experienced IB teachers with no explanation at all. If they cannot work out what to teach and in what order, the pack is not ready. Do not walk them through it — the whole point is that a stranger downloading it at 9pm can teach from it the next morning.'},
 
  // Day 4 — Messaging
- {id:'D4-01',d:4,w:'Offer',p:'Critical',n:'Core message',t:'Write the one-sentence promise and three value pillars',v:'Core messaging block'},
- {id:'D4-02',d:4,w:'Funnel',p:'High',n:'Segment messages',t:'Write segment messages: new-to-IB, overloaded solo, department lead',v:'Segment messaging matrix'},
- {id:'D4-03',d:4,w:'Funnel',p:'Critical',n:'Routing matrix',t:'Build the routing matrix for sample, product-direct and school destinations',v:'Traffic routing matrix'},
- {id:'D4-04',d:4,w:'Web',p:'Critical',n:'Product page copy',t:'Write the product-page copy',v:'Product-page copy deck'},
- {id:'D4-05',d:4,w:'Web',p:'Critical',n:'Sample funnel copy',t:'Write the sample landing-page and thank-you-page copy',v:'Sample funnel copy'},
- {id:'D4-06',d:4,w:'Offer',p:'High',n:'FAQ and objections',t:'Write objections, FAQs, licence explanation and syllabus-transition copy',v:'FAQ + objection bank'},
- {id:'D4-07',d:4,w:'Creative',p:'High',n:'Ad copy bank',t:'Create the ad-copy bank: hooks, headlines, descriptions and CTAs',v:'Ad-copy bank'},
- {id:'D4-08',d:4,w:'Analytics',p:'High',n:'Measurement naming',t:'Define campaign names, UTM convention and conversion-event names',v:'Measurement naming sheet'},
- {id:'D4-09',d:4,w:'Creative',p:'High',n:'Product tour video',t:'Record the 3–5 minute product-tour video',v:'Product-tour video'},
+ {id:'D4-01',d:4,w:'Offer',p:'Critical',n:'Core message',t:'Write the one-sentence promise and three value pillars',v:'Core messaging block',
+  g:'One sentence a teacher would repeat to a colleague, plus three supporting pillars. If you cannot say it in one sentence, the product page will not work either.'},
+ {id:'D4-02',d:4,w:'Funnel',p:'High',n:'Segment messages',t:'Write segment messages: new-to-IB, overloaded solo, department lead',v:'Segment messaging matrix',
+  g:'Three versions of the same offer: new-to-IB (confidence), overloaded solo teacher (time), department head (consistency). Same product, three different pains.'},
+ {id:'D4-03',d:4,w:'Funnel',p:'Critical',n:'Routing matrix',t:'Build the routing matrix for sample, product-direct and school destinations',v:'Traffic routing matrix',
+  g:'Write down which ad sends which audience to which page. The Funnel Routes tab is the reference; this task turns it into a concrete plan per campaign.'},
+ {id:'D4-04',d:4,w:'Web',p:'Critical',n:'Product page copy',t:'Write the product-page copy',v:'Product-page copy deck',
+  g:'Write the copy before building the page. Twelve sections, in the order given in the Marketing Plan. Copy first, layout second — it is much cheaper to rewrite a document than a page.'},
+ {id:'D4-05',d:4,w:'Web',p:'Critical',n:'Sample funnel copy',t:'Write the sample landing-page and thank-you-page copy',v:'Sample funnel copy',
+  g:'The landing page and the thank-you page. The thank-you page matters more than people expect: it is where a free download turns into a considered purchase.'},
+ {id:'D4-06',d:4,w:'Offer',p:'High',n:'FAQ and objections',t:'Write objections, FAQs, licence explanation and syllabus-transition copy',v:'FAQ + objection bank',
+  g:'Write an answer to every question you would rather not be asked. Is it editable? What about SL and HL? What happens in 2029? Can my department share it? An unanswered objection is a silent no.'},
+ {id:'D4-07',d:4,w:'Creative',p:'High',n:'Ad copy bank',t:'Create the ad-copy bank: hooks, headlines, descriptions and CTAs',v:'Ad-copy bank',
+  g:'Ten hooks, five headlines, five CTAs. Write more than you need, so that testing is a matter of choosing rather than creating under pressure.'},
+ {id:'D4-08',d:4,w:'Analytics',p:'High',n:'Measurement naming',t:'Define campaign names, UTM convention and conversion-event names',v:'Measurement naming sheet',
+  g:'Agree the names before anything goes live — campaigns, UTM values, event names. Renaming later breaks the history you are trying to learn from.'},
+ {id:'D4-09',d:4,w:'Creative',p:'High',n:'Product tour video',t:'Record the 3–5 minute product-tour video',v:'Product-tour video',
+  g:'Three to five minutes, screen recording, no production polish required. Show one lesson across all its matching assets. That single demonstration does more work than any paragraph of copy.'},
 
  // Day 5 — Web
- {id:'D5-01',d:5,w:'Web',p:'Critical',n:'Product page',t:'Build the main product page using actual resource visuals',v:'Live product page'},
- {id:'D5-02',d:5,w:'Web',p:'Critical',n:'Sample landing page',t:'Build the sample-pack landing page',v:'Live sample page'},
- {id:'D5-03',d:5,w:'Web',p:'Critical',n:'Thank-you page',t:'Build the thank-you page — download, tour and buy-now CTA together',v:'Live thank-you page'},
- {id:'D5-04',d:5,w:'Web',p:'Critical',n:'Pricing section',t:'Build the pricing and licence comparison section',v:'Pricing section'},
- {id:'D5-05',d:5,w:'Web',p:'Critical',n:'School quote page',t:'Build the school quote page and qualification form',v:'School quote path'},
- {id:'D5-06',d:5,w:'Web',p:'High',n:'Proof section',t:'Embed the product-tour video and screenshot inventory',v:'Product proof section'},
- {id:'D5-07',d:5,w:'Web',p:'High',n:'Web QA',t:'Complete mobile, accessibility, link and page-speed QA',v:'Web QA report'},
+ {id:'D5-01',d:5,w:'Web',p:'Critical',n:'Product page',t:'Build the main product page using actual resource visuals',v:'Live product page',
+  g:'Use real screenshots of real resources throughout. Stock imagery signals that the product may not actually exist yet.'},
+ {id:'D5-02',d:5,w:'Web',p:'Critical',n:'Sample landing page',t:'Build the sample-pack landing page',v:'Live sample page',
+  g:'One claim, one form, one button. Every additional choice on this page costs you leads.'},
+ {id:'D5-03',d:5,w:'Web',p:'Critical',n:'Thank-you page',t:'Build the thank-you page — download, tour and buy-now CTA together',v:'Live thank-you page',
+  g:'Download link, product tour and a buy button on the same screen. Some people will buy within minutes of seeing the sample — do not make them wait for an email to do it.'},
+ {id:'D5-04',d:5,w:'Web',p:'Critical',n:'Pricing section',t:'Build the pricing and licence comparison section',v:'Pricing section',
+  g:'Three choices only: one curriculum, both curricula, department. For each, state how many users, what is included, the update period and the licence boundary.'},
+ {id:'D5-05',d:5,w:'Web',p:'Critical',n:'School quote page',t:'Build the school quote page and qualification form',v:'School quote path',
+  g:'A short qualification form, not a checkout. School, role, courses, teacher count, intended start date, and whether they need an invoice or purchase order.'},
+ {id:'D5-06',d:5,w:'Web',p:'High',n:'Proof section',t:'Embed the product-tour video and screenshot inventory',v:'Product proof section',
+  g:'The product tour video plus thumbnails of every sample component. Show the contents rather than describing them.'},
+ {id:'D5-07',d:5,w:'Web',p:'High',n:'Web QA',t:'Complete mobile, accessibility, link and page-speed QA',v:'Web QA report',
+  g:'Test on a phone, test every link, test the page speed. Most teachers will see this for the first time on a phone during a free period.'},
 
  // Day 6 — CRM
- {id:'D6-01',d:6,w:'CRM',p:'Critical',n:'CRM schema',t:'Configure CRM fields and tags: role, AI/AA, level, source, route, buyer status',v:'CRM schema'},
- {id:'D6-02',d:6,w:'CRM',p:'Critical',n:'Website form',t:'Connect the website sample form to the CRM',v:'Website form integration'},
- {id:'D6-03',d:6,w:'CRM',p:'High',n:'Native lead forms',t:'Connect Facebook and LinkedIn lead forms to the CRM',v:'Native lead integration'},
- {id:'D6-04',d:6,w:'CRM',p:'Critical',n:'Delivery email',t:'Build the immediate delivery email — sample, product link and reply prompt',v:'Delivery email'},
- {id:'D6-05',d:6,w:'CRM',p:'Critical',n:'Sales sequence',t:'Build the accelerated sales sequence for days 1, 2, 3 and 5',v:'Four-email sales sequence'},
- {id:'D6-06',d:6,w:'CRM',p:'High',n:'Automation branches',t:'Create teacher, school and buyer-suppression branches',v:'Automation branches'},
- {id:'D6-07',d:6,w:'CRM',p:'High',n:'CRM QA',t:'Test delivery, links, replies, unsubscribe, tags and notifications',v:'CRM QA report'},
+ {id:'D6-01',d:6,w:'CRM',p:'Critical',n:'CRM schema',t:'Configure CRM fields and tags: role, AI/AA, level, source, route, buyer status',v:'CRM schema',
+  g:'Decide the fields before a single lead arrives: role, AI or AA, SL or HL, source, route, buyer status. Retrofitting segmentation onto untagged leads is painful and usually incomplete.'},
+ {id:'D6-02',d:6,w:'CRM',p:'Critical',n:'Website form',t:'Connect the website sample form to the CRM',v:'Website form integration',
+  g:'The website form is your source of truth. Test that a submission creates a correctly tagged contact and triggers the delivery email.'},
+ {id:'D6-03',d:6,w:'CRM',p:'High',n:'Native lead forms',t:'Connect Facebook and LinkedIn lead forms to the CRM',v:'Native lead integration',
+  g:'Facebook and LinkedIn forms convert better because they pre-fill, but the leads must land in the same CRM with the same tags, or your reporting splits in two.'},
+ {id:'D6-04',d:6,w:'CRM',p:'Critical',n:'Delivery email',t:'Build the immediate delivery email — sample, product link and reply prompt',v:'Delivery email',
+  g:'Sends within seconds. Include the download, say which file to open first, and ask one question — which course are you teaching this year? Replies improve deliverability and tell you who is serious.'},
+ {id:'D6-05',d:6,w:'CRM',p:'Critical',n:'Sales sequence',t:'Build the accelerated sales sequence for days 1, 2, 3 and 5',v:'Four-email sales sequence',
+  g:'Four emails across five days, not seven across three weeks. Teachers decide during planning windows, and a slow sequence arrives after the window has closed.'},
+ {id:'D6-06',d:6,w:'CRM',p:'High',n:'Automation branches',t:'Create teacher, school and buyer-suppression branches',v:'Automation branches',
+  g:'Teachers and schools need different messages, and buyers must stop receiving sales emails the moment they purchase. Nothing damages trust faster than being sold something you already own.'},
+ {id:'D6-07',d:6,w:'CRM',p:'High',n:'CRM QA',t:'Test delivery, links, replies, unsubscribe, tags and notifications',v:'CRM QA report',
+  g:'Put yourself through the entire sequence with a fresh address. Check every link, the unsubscribe, and that the tags applied correctly.'},
 
  // Day 7 — Commerce
- {id:'D7-01',d:7,w:'Commerce',p:'Critical',n:'Stripe products',t:'Create Stripe products, prices or Payment Links for each offer',v:'Live checkout products'},
- {id:'D7-02',d:7,w:'Commerce',p:'Critical',n:'Checkout config',t:'Configure payment methods, tax treatment and billing details',v:'Checkout configuration'},
- {id:'D7-03',d:7,w:'Commerce',p:'Critical',n:'Transactional emails',t:'Configure receipt, licence confirmation and access emails',v:'Transactional email set'},
- {id:'D7-04',d:7,w:'Commerce',p:'Critical',n:'Secure fulfilment',t:'Connect checkout to secure fulfilment',v:'Fulfilment automation'},
- {id:'D7-05',d:7,w:'Commerce',p:'High',n:'School lead routing',t:'Finalise the school qualification form and lead routing',v:'Qualified school workflow'},
- {id:'D7-06',d:7,w:'Commerce',p:'High',n:'School documents',t:'Create the department quote, order form, invoice and licence templates',v:'School sales document set'},
- {id:'D7-07',d:7,w:'Commerce',p:'Medium',n:'Demo script',t:'Create the 15-minute school walkthrough script',v:'Demo script'},
- {id:'D7-08',d:7,w:'Commerce',p:'Critical',n:'Purchase test',t:'Run test individual and school transactions end-to-end',v:'Purchase QA evidence'},
+ {id:'D7-01',d:7,w:'Commerce',p:'Critical',n:'Stripe products',t:'Create Stripe products, prices or Payment Links for each offer',v:'Live checkout products',
+  g:'One product per offer, with the licence terms in the description so they appear on the receipt. Buyers refer back to receipts more than you would think.'},
+ {id:'D7-02',d:7,w:'Commerce',p:'Critical',n:'Checkout config',t:'Configure payment methods, tax treatment and billing details',v:'Checkout configuration',
+  g:'Payment methods, tax treatment and business details. Check what applies to selling digital goods to schools in the countries you are targeting.'},
+ {id:'D7-03',d:7,w:'Commerce',p:'Critical',n:'Transactional emails',t:'Configure receipt, licence confirmation and access emails',v:'Transactional email set',
+  g:'Receipt, licence confirmation and access instructions. These are the first thing a buyer reads after paying, and they set the tone for the whole relationship.'},
+ {id:'D7-04',d:7,w:'Commerce',p:'Critical',n:'Secure fulfilment',t:'Connect checkout to secure fulfilment',v:'Fulfilment automation',
+  g:'Not a permanently public Drive link. Use expiring links or a customer account. A leaked link is a licence you never got paid for.'},
+ {id:'D7-05',d:7,w:'Commerce',p:'High',n:'School lead routing',t:'Finalise the school qualification form and lead routing',v:'Qualified school workflow',
+  g:'Every school enquiry must reach a named person with a response-time commitment. School deals are lost to slow replies far more often than to price.'},
+ {id:'D7-06',d:7,w:'Commerce',p:'High',n:'School documents',t:'Create the department quote, order form, invoice and licence templates',v:'School sales document set',
+  g:'Quote, order form, invoice and licence, ready to send. School procurement moves at the speed of your paperwork.'},
+ {id:'D7-07',d:7,w:'Commerce',p:'Medium',n:'Demo script',t:'Create the 15-minute school walkthrough script',v:'Demo script',
+  g:'Fifteen minutes about their situation, not a generic product tour. Ask what they teach and what is inconsistent, then show only the parts that answer it.'},
+ {id:'D7-08',d:7,w:'Commerce',p:'Critical',n:'Purchase test',t:'Run test individual and school transactions end-to-end',v:'Purchase QA evidence',
+  g:'Run a real transaction on both paths — individual checkout and school invoice — then refund yourself. Test before traffic arrives, not after the first complaint.'},
 
  // Day 8 — Analytics & campaigns
- {id:'D8-01',d:8,w:'Analytics',p:'Critical',n:'Web analytics',t:'Install or verify GA4 / equivalent web analytics',v:'Web analytics active'},
- {id:'D8-02',d:8,w:'Analytics',p:'Critical',n:'Meta tracking',t:'Install Meta Pixel and Conversions API where practical',v:'Meta tracking active'},
- {id:'D8-03',d:8,w:'Analytics',p:'Critical',n:'LinkedIn tracking',t:'Install the LinkedIn Insight Tag',v:'LinkedIn tracking active'},
- {id:'D8-04',d:8,w:'Analytics',p:'Critical',n:'Conversion events',t:'Configure all funnel conversion events',v:'Event map implemented'},
+ {id:'D8-01',d:8,w:'Analytics',p:'Critical',n:'Web analytics',t:'Install or verify GA4 / equivalent web analytics',v:'Web analytics active',
+  g:'Install it and verify it actually records a page view. An untracked launch teaches you nothing, and the traffic only happens once.'},
+ {id:'D8-02',d:8,w:'Analytics',p:'Critical',n:'Meta tracking',t:'Install Meta Pixel and Conversions API where practical',v:'Meta tracking active',
+  g:'The Pixel at minimum, Conversions API if practical. Without it you cannot retarget or optimise, and Facebook spends your budget blind.'},
+ {id:'D8-03',d:8,w:'Analytics',p:'Critical',n:'LinkedIn tracking',t:'Install the LinkedIn Insight Tag',v:'LinkedIn tracking active',
+  g:'The Insight Tag, plus conversion events for quote requests. LinkedIn traffic is expensive, so you need to know exactly what it produced.'},
+ {id:'D8-04',d:8,w:'Analytics',p:'Critical',n:'Conversion events',t:'Configure all funnel conversion events',v:'Event map implemented',
+  g:'Sample request, download, tour view, pricing view, checkout start, purchase, quote request. These events are the funnel — without them you only see clicks.'},
  {id:'D8-05',d:8,w:'Analytics',p:'High',n:'UTM convention',t:'Apply the UTM convention to every campaign and link',v:'UTM applied',
   g:'UTMs are tags on the end of a link that tell your analytics where a visitor came from. Agree the naming before you spend anything — e.g. utm_source=facebook, utm_medium=cpc, utm_campaign=c1-cold-sample, utm_content=screen-recording-a. Without a fixed convention you cannot tell which creative produced which sale, and the spend is wasted as a learning exercise.'},
- {id:'D8-06',d:8,w:'Funnel',p:'High',n:'Campaign drafts',t:'Build FB cold-sample, FB product-direct and LinkedIn school campaign drafts',v:'Campaign drafts (unpublished)'},
- {id:'D8-07',d:8,w:'Funnel',p:'High',n:'Audiences',t:'Build retargeting and buyer-suppression audiences',v:'Audience structure'},
- {id:'D8-08',d:8,w:'Analytics',p:'High',n:'Event testing',t:'Test all events and create the weekly performance view',v:'Verified event map + dashboard'},
+ {id:'D8-06',d:8,w:'Funnel',p:'High',n:'Campaign drafts',t:'Build FB cold-sample, FB product-direct and LinkedIn school campaign drafts',v:'Campaign drafts (unpublished)',
+  g:'Build the campaigns but leave them unpublished. Drafting now means launch day is a button press rather than a build under time pressure.'},
+ {id:'D8-07',d:8,w:'Funnel',p:'High',n:'Audiences',t:'Build retargeting and buyer-suppression audiences',v:'Audience structure',
+  g:'Cold, warm, sample-leads, and a buyer-suppression list. Never pay to advertise to someone who has already bought.'},
+ {id:'D8-08',d:8,w:'Analytics',p:'High',n:'Event testing',t:'Test all events and create the weekly performance view',v:'Verified event map + dashboard',
+  g:'Trigger each event yourself and confirm it arrives. Broken tracking discovered a week in wastes the entire week of spend.'},
 
  // Day 9 — Creative & proof
- {id:'D9-01',d:9,w:'Creative',p:'High',n:'Product-direct ads',t:'Produce at least 3 direct-to-product teacher creatives',v:'Product-direct ad set'},
- {id:'D9-02',d:9,w:'Creative',p:'High',n:'Sample ads',t:'Produce at least 3 sample-pack teacher creatives',v:'Sample ad set'},
- {id:'D9-03',d:9,w:'Creative',p:'High',n:'Department ads',t:'Produce at least 2 school/department creatives for LinkedIn',v:'Department ad set'},
- {id:'D9-04',d:9,w:'Creative',p:'Medium',n:'Video assets',t:'Finalise founder video and product-tour clips',v:'Video assets'},
- {id:'D9-05',d:9,w:'Creative',p:'Medium',n:'Organic posts',t:'Prepare organic launch posts',v:'Organic launch posts'},
- {id:'D9-06',d:9,w:'Offer',p:'High',n:'Collect testimonials',t:'Collect and approve verified testimonials or pilot evidence',v:'Approved proof'},
- {id:'D9-07',d:9,w:'Creative',p:'Critical',n:'Creative QA',t:'Run final claims, link, size and destination QA on every creative',v:'Creative QA sign-off'},
+ {id:'D9-01',d:9,w:'Creative',p:'High',n:'Product-direct ads',t:'Produce at least 3 direct-to-product teacher creatives',v:'Product-direct ad set',
+  g:'For warm and high-intent audiences. These sell the kit directly — no sample, no lead gate, straight to the product page.'},
+ {id:'D9-02',d:9,w:'Creative',p:'High',n:'Sample ads',t:'Produce at least 3 sample-pack teacher creatives',v:'Sample ad set',
+  g:'For cold audiences. These sell the free lesson and never mention the price. Cold traffic is not ready for a number yet.'},
+ {id:'D9-03',d:9,w:'Creative',p:'High',n:'Department ads',t:'Produce at least 2 school/department creatives for LinkedIn',v:'Department ad set',
+  g:'A completely different argument: consistency, onboarding and staff turnover. Personal time saving does not move a department head who is not the one doing the planning.'},
+ {id:'D9-04',d:9,w:'Creative',p:'Medium',n:'Video assets',t:'Finalise founder video and product-tour clips',v:'Video assets',
+  g:'Founder video and product tour clips, cut to the lengths each placement needs. One recording session can produce all of them.'},
+ {id:'D9-05',d:9,w:'Creative',p:'Medium',n:'Organic posts',t:'Prepare organic launch posts',v:'Organic launch posts',
+  g:'Demonstrate the product rather than announcing it. A short extract from a real lesson outperforms any \'we have launched\' post.'},
+ {id:'D9-06',d:9,w:'Offer',p:'High',n:'Collect testimonials',t:'Collect and approve verified testimonials or pilot evidence',v:'Approved proof',
+  g:'Only from people who genuinely used it. Ask what they used and what changed. Specifics persuade; general praise does not.'},
+ {id:'D9-07',d:9,w:'Creative',p:'Critical',n:'Creative QA',t:'Run final claims, link, size and destination QA on every creative',v:'Creative QA sign-off',
+  g:'Check every claim against the Day 1 claims list, every link against its intended route, every size against its placement. Fix these before spending, not after.'},
  {id:'D9-08',d:9,w:'Web',p:'High',n:'Testimonials on page',t:'Add approved testimonials to the product page proof section',v:'Testimonials live on product page',
   g:'Order matters: specific testimonials describing what the teacher used and what changed, then real screenshots, then founder credibility. A vague "great resource!" is worth less than "I taught the whole statistics unit from this without building anything." Never use star ratings you cannot substantiate, and never reuse tutoring testimonials for the curriculum product.'},
  {id:'D9-09',d:9,w:'Offer',p:'Medium',n:'Testimonial permissions',t:'Get written permission to use each testimonial and the person’s name and school',v:'Signed testimonial permissions',
   g:'An email reply saying "yes, you can use my name and school" is enough — keep it on file. Some teachers will be happy to be quoted but not to have their school named; ask rather than assume, and offer initials or "an IB teacher in Singapore" as an alternative.'},
 
  // Day 10 — Launch
- {id:'D10-01',d:10,w:'Launch',p:'Critical',n:'Warm list launch',t:'Send the warm-list launch email straight to the product page',v:'Warm launch sent'},
- {id:'D10-02',d:10,w:'Launch',p:'Medium',n:'Publish organic posts',t:'Publish the organic launch posts',v:'Posts live'},
- {id:'D10-03',d:10,w:'Launch',p:'Critical',n:'Launch FB cold',t:'Launch a small FB cold-traffic sample-pack campaign',v:'R1 live'},
- {id:'D10-04',d:10,w:'Launch',p:'High',n:'Launch FB retarget',t:'Launch a small FB retargeting product-direct campaign',v:'R4 live'},
- {id:'D10-05',d:10,w:'Launch',p:'High',n:'Launch LinkedIn',t:'Launch the LinkedIn school quote test',v:'R3 live'},
- {id:'D10-06',d:10,w:'Launch',p:'Critical',n:'Live monitoring',t:'Monitor forms, emails, downloads, checkout, access and quote alerts live',v:'Launch-day QA log'},
- {id:'D10-07',d:10,w:'Launch',p:'Critical',n:'School follow-up',t:'Personally contact every qualified school lead',v:'School follow-up log'},
- {id:'D10-08',d:10,w:'Launch',p:'High',n:'Baseline and backlog',t:'Record baseline metrics and create the 7-day optimisation backlog',v:'Baseline + backlog'},
+ {id:'D10-01',d:10,w:'Launch',p:'Critical',n:'Warm list launch',t:'Send the warm-list launch email straight to the product page',v:'Warm launch sent',
+  g:'Send to people who already know you, straight to the product page. This is your highest-converting traffic and it costs nothing.'},
+ {id:'D10-02',d:10,w:'Launch',p:'Medium',n:'Publish organic posts',t:'Publish the organic launch posts',v:'Posts live',
+  g:'Free reach on launch day. Post before the ads go live so the page has some genuine activity when paid traffic arrives.'},
+ {id:'D10-03',d:10,w:'Launch',p:'Critical',n:'Launch FB cold',t:'Launch a small FB cold-traffic sample-pack campaign',v:'R1 live',
+  g:'Small budget. You are testing whether the sample page converts, not trying to hit a revenue number on day one.'},
+ {id:'D10-04',d:10,w:'Launch',p:'High',n:'Launch FB retarget',t:'Launch a small FB retargeting product-direct campaign',v:'R4 live',
+  g:'Only meaningful once there is an audience to retarget. Expect this to start slow and improve over the following week as the pool fills.'},
+ {id:'D10-05',d:10,w:'Launch',p:'High',n:'Launch LinkedIn',t:'Launch the LinkedIn school quote test',v:'R3 live',
+  g:'A test, not a campaign. School sales cycles run for weeks, so judge this on qualified quote requests rather than same-day revenue.'},
+ {id:'D10-06',d:10,w:'Launch',p:'Critical',n:'Live monitoring',t:'Monitor forms, emails, downloads, checkout, access and quote alerts live',v:'Launch-day QA log',
+  g:'Watch it happen in real time. The first broken thing is always found by a real user, and you want to be there when it happens rather than reading about it the next morning.'},
+ {id:'D10-07',d:10,w:'Launch',p:'Critical',n:'School follow-up',t:'Personally contact every qualified school lead',v:'School follow-up log',
+  g:'Phone or a personal email, the same day. A school lead left for 48 hours has usually gone quiet for good.'},
+ {id:'D10-08',d:10,w:'Launch',p:'High',n:'Baseline and backlog',t:'Record baseline metrics and create the 7-day optimisation backlog',v:'Baseline + backlog',
+  g:'Write down the numbers you actually got and the list of things to fix. This becomes your plan for week two, while the detail is still fresh.'},
 ];
 
 const WORKSTREAMS = ['Product','Offer','Funnel','Web','CRM','Commerce','Analytics','Creative','Launch'];
@@ -821,7 +894,7 @@ function allTasks(){
   const custom = customTasks
     .filter(c => !c.archived)
     .map(c => ({ id:c.id, d:c.day, w:c.workstream, p:c.priority,
-                 t:c.title, v:c.deliverable || '', custom:true,
+                 t:c.title, v:c.deliverable || '', g:c.guidance || '', custom:true,
                  addedBy:c.created_by_name }));
   return built.concat(custom).sort((a,b)=> a.d - b.d || String(a.id).localeCompare(String(b.id)));
 }
@@ -971,9 +1044,14 @@ function addFormHTML(day){
                onkeydown="if(event.key==='Enter')addTask();if(event.key==='Escape')cancelAdd()">
       </div>
       <div class="af-f af-wide">
-        <label>Deliverable</label>
-        <input type="text" id="ct-deliv" placeholder="What exists when it's done? (optional)"
+        <label>Cover</label>
+        <input type="text" id="ct-deliv" placeholder="The fuller description, or what exists when it's done"
                onkeydown="if(event.key==='Enter')addTask();if(event.key==='Escape')cancelAdd()">
+      </div>
+      <div class="af-f af-wide">
+        <label>What this means <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--faint)">— optional, shows behind the ? button</span></label>
+        <textarea id="ct-guide" rows="2" placeholder="Why it matters, what done looks like, the mistake to avoid"
+                  onkeydown="if(event.key==='Escape')cancelAdd()"></textarea>
       </div>
       <div class="af-f">
         <label>Day</label>
@@ -1227,6 +1305,7 @@ async function addTask(){
     priority: document.getElementById('ct-pri')?.value || 'Medium',
     title,
     deliverable: (document.getElementById('ct-deliv')?.value || '').trim(),
+    guidance: (document.getElementById('ct-guide')?.value || '').trim(),
     archived: false,
     created_by: me ? me.email : null,
     created_by_name: me ? me.name : 'You',
