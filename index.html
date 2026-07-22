@@ -182,6 +182,47 @@ select:focus,input:focus,textarea:focus{border-color:var(--blue)}
 .res-in{resize:vertical}
 .res-in:focus,.link-in:focus,.note-in:focus{border-color:var(--blue);outline:none}
 
+/* ---------- note post button ---------- */
+.note-act{display:flex;align-items:center;gap:9px;margin-top:5px}
+.btn-post{background:var(--blue);color:#fff;border:none;padding:5px 13px;border-radius:6px;
+  font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-post:hover:not(:disabled){background:#1D4ED8}
+.btn-post:disabled{background:#CBD5E1;cursor:default}
+.note-hint{font-size:10.5px;color:var(--faint)}
+
+/* ---------- reorder controls ---------- */
+.reorder-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ord-btn{width:28px;height:28px;border:1px solid var(--line);background:var(--card);
+  border-radius:6px;cursor:pointer;font-size:14px;font-family:inherit;color:var(--text)}
+.ord-btn:hover{background:var(--bg-2);border-color:var(--blue);color:var(--blue)}
+.reorder-lbl{font-size:11.5px;color:var(--muted);margin-left:5px}
+.day-sel{padding:5px 8px;font-size:12.5px}
+
+/* ---------- getting-found grid ---------- */
+.disc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.disc{border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:var(--card)}
+.disc-h{font-weight:800;font-size:14px;color:var(--navy)}
+.disc-h span{display:block;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:none;margin-top:1px}
+.disc-b{font-size:12px;color:var(--text);line-height:1.5;margin-top:7px}
+@media(max-width:800px){ .disc-grid{grid-template-columns:1fr} }
+
+/* ---------- route work tracker ---------- */
+.rw-toggle{margin-left:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--muted);
+  padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.rw-toggle:hover{border-color:var(--blue);color:var(--blue)}
+.rw{display:none;margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}
+.rw.show{display:block}
+.rw-f{margin-bottom:9px}
+.rw-f label{display:block;font-size:10.5px;font-weight:800;color:var(--muted);margin-bottom:3px}
+.rw-f textarea{width:100%;font-size:12.4px;padding:6px 9px;border:1px solid var(--line);
+  border-radius:6px;font-family:inherit;line-height:1.5;resize:vertical}
+.rw-f textarea:focus{border-color:var(--blue);outline:none}
+.rw-disc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px}
+.rw-df label{display:block;font-size:10px;font-weight:800;color:var(--blue);margin-bottom:3px}
+.rw-df input{width:100%;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit}
+.rw-df input:focus{border-color:var(--blue);outline:none}
+@media(max-width:600px){ .rw-disc{grid-template-columns:1fr} }
+
 /* ---------- add / remove tasks ---------- */
 .pill.cust{background:#EDE9FE;color:#6D28D9}
 .addbtn{margin-left:10px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.26);
@@ -654,8 +695,10 @@ function routeStatus(id){
 }
 function routeMeta(id){
   const r = S.routes[id];
-  return (r && typeof r === 'object') ? r : null;
+  if(!r) return null;
+  return (typeof r === 'object') ? r : {status:r};   // upgrade legacy strings
 }
+function routeField(id, key){ return (routeMeta(id)||{})[key] || ''; }
 
 /* ---------- attribution ---------- */
 function stamp(obj){
@@ -927,15 +970,26 @@ const pct   = (a,b) => b ? Math.round(a/b*100) : 0;
    removal is reversible. */
 const isHidden = id => !!(S.tasks[id]||{}).hidden;
 
-/* The single source of truth for "what tasks exist right now". */
+/* The single source of truth for "what tasks exist right now".
+   A task's day can be overridden (dayOverride) and its position within a
+   day reordered (ord). Both live in S.tasks[id] so they sync like any
+   other field. _nat is the natural fallback order. */
+const effDay = (id, base) => { const o=(S.tasks[id]||{}).dayOverride; return (o==null?base:o); };
+const effOrd = (id, nat) => { const o=(S.tasks[id]||{}).ord; return (o==null?nat:o); };
+
 function allTasks(){
-  const built  = TASKS.filter(t => !isHidden(t.id));
+  const built = TASKS
+    .map((t,i)=>({t,i}))
+    .filter(x => !isHidden(x.t.id))
+    .map(({t,i})=>({ ...t, _nat:i, d: effDay(t.id, t.d) }));
   const custom = customTasks
     .filter(c => !c.archived)
-    .map(c => ({ id:c.id, d:c.day, w:c.workstream, p:c.priority,
-                 t:c.title, v:c.deliverable || '', g:c.guidance || '', custom:true,
-                 addedBy:c.created_by_name }));
-  return built.concat(custom).sort((a,b)=> a.d - b.d || String(a.id).localeCompare(String(b.id)));
+    .map((c,i)=>({ id:c.id, d: effDay(c.id, c.day), w:c.workstream, p:c.priority,
+                   t:c.title, v:c.deliverable || '', g:c.guidance || '', custom:true,
+                   addedBy:c.created_by_name, _nat: 1000 + i }));
+  return built.concat(custom).sort((a,b)=>
+    a.d - b.d || effOrd(a.id, a._nat) - effOrd(b.id, b._nat)
+  );
 }
 
 function removedCount(){
@@ -1208,10 +1262,26 @@ function taskRowHTML(t){
         </div>
         <div class="df">
           <label>Notes</label>
-          <textarea class="note-in" rows="2" placeholder="Working notes, blockers, questions"
+          <textarea class="note-in" id="note-task-${t.id}" rows="2" placeholder="Working notes, blockers, questions"
             ${canWrite()?'':'readonly'}
-            oninput="setNote('${t.id}',this.value)">${esc(st.note||'')}</textarea>
+            oninput="noteDirty('task','${t.id}')"
+            onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postNote('task','${t.id}')">${esc(st.note||'')}</textarea>
+          ${canWrite()?`<div class="note-act">
+            <button class="btn-post" id="post-task-${t.id}" onclick="postNote('task','${t.id}')" disabled>Post note</button>
+            <span class="note-hint">Cmd/Ctrl + Enter</span>
+          </div>`:''}
         </div>
+        ${canWrite()?`<div class="df reorder">
+          <label>Position</label>
+          <div class="reorder-row">
+            <button class="ord-btn" onclick="moveTask('${t.id}',-1)" title="Move up">↑</button>
+            <button class="ord-btn" onclick="moveTask('${t.id}',1)" title="Move down">↓</button>
+            <span class="reorder-lbl">Move to</span>
+            <select class="day-sel" onchange="moveTaskToDay('${t.id}',this.value)">
+              ${Object.keys(DAYTITLES).map(d=>`<option value="${d}"${+d===t.d?' selected':''}>Day ${d}</option>`).join('')}
+            </select>
+          </div>
+        </div>`:''}
       </div>
     </div>
     ${canWrite()?`<button class="rmbtn" onclick="removeTask('${t.id}')" title="Remove this task">×</button>`:''}
@@ -1320,8 +1390,11 @@ function tog(id, v){
    whichever fields it omitted. */
 function payload(id){
   const c = S.tasks[id] || {};
-  return { done:!!c.done, note:c.note||'', result:c.result||'',
-           link:c.link||'', hidden:!!c.hidden };
+  const p = { done:!!c.done, note:c.note||'', result:c.result||'',
+              link:c.link||'', hidden:!!c.hidden };
+  if(c.ord != null) p.ord = c.ord;
+  if(c.dayOverride != null) p.dayOverride = c.dayOverride;
+  return p;
 }
 
 /* Works for both built-in and custom tasks. */
@@ -1358,31 +1431,107 @@ function setField(id, key, v){
   }, 900);
 }
 
-let noteT = {};
-function setNote(id,v){
+/* ---------- notes: manual post, no auto-save ----------
+   Typing only enables the Post button. Nothing is saved until it's clicked,
+   so drafts are never pushed to everyone else mid-sentence. */
+function noteDirty(kind, id){
+  const btn = document.getElementById(`post-${kind}-${id}`);
+  const ta  = document.getElementById(`note-${kind}-${id}`);
+  if(!btn || !ta) return;
+  const saved = ((kind==='asset'?S.assets:S.tasks)[id]||{}).note || '';
+  btn.disabled = (ta.value === saved);
+}
+function postNote(kind, id){
   if(!guard()) return;
-  const prev = S.tasks[id] || {};
-  S.tasks[id] = stamp(Object.assign({}, prev, {note:v}));
+  const ta = document.getElementById(`note-${kind}-${id}`);
+  if(!ta) return;
+  const bucket = (kind==='asset') ? S.assets : S.tasks;
+  const prev = bucket[id] || {};
+  bucket[id] = stamp(Object.assign({}, prev, {note: ta.value}));
   save();
-  clearTimeout(noteT[id]);
-  noteT[id] = setTimeout(()=>{
+  if(kind==='asset'){
+    const a = ASSETS.find(x=>x[0]===id);
+    push('asset', id, assetPayload(id), a?a[2]:id, 'updated a note on');
+  } else {
     push('task', id, payload(id), taskLabel(id), 'updated a note on');
-  }, 900);
+  }
+  toast('Note posted.');
+  render();
+}
+
+/* ---------- reorder tasks ---------- */
+function moveTask(id, dir){
+  if(!guard()) return;
+  const all = allTasks();
+  const t = all.find(x=>x.id===id); if(!t) return;
+  const dayList = all.filter(x=>x.d===t.d);
+  const idx = dayList.findIndex(x=>x.id===id);
+  const j = idx + dir;
+  if(j < 0 || j >= dayList.length) return;
+
+  const arr = dayList.slice();
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(j, 0, moved);
+
+  // Write sequential ords across the day. Reorders are not logged to the feed.
+  arr.forEach((x,k)=>{
+    const prev = S.tasks[x.id] || {};
+    S.tasks[x.id] = stamp(Object.assign({}, prev, {ord: k*10}));
+    push('task', x.id, payload(x.id), taskLabel(x.id), null);
+  });
+  save(); render();
+}
+
+function moveTaskToDay(id, newDay){
+  if(!guard()) return;
+  newDay = +newDay;
+  const t = allTasks().find(x=>x.id===id); if(!t || t.d===newDay) return;
+  const inDay = allTasks().filter(x=>x.d===newDay);
+  const maxOrd = inDay.length ? Math.max(...inDay.map(x=>effOrd(x.id, x._nat))) : 0;
+  const prev = S.tasks[id] || {};
+  S.tasks[id] = stamp(Object.assign({}, prev, {dayOverride:newDay, ord:maxOrd+10}));
+  save();
+  push('task', id, payload(id), taskLabel(id), 'moved to day '+newDay);
+  toast('Moved to Day '+newDay+'.');
+  render();
 }
 
 /* =====================================================================
    ROUTES
    ===================================================================== */
+function routeStageField(id, key, label, ph){
+  return `<div class="rw-f">
+    <label>${label}</label>
+    <textarea rows="2" placeholder="${ph}" ${canWrite()?'':'readonly'}
+      oninput="setRouteField('${id}','${key}',this.value)">${esc(routeField(id,key))}</textarea>
+  </div>`;
+}
+
 function viewRoutes(){
+  const readyCount = ROUTES.filter(r=>routeStatus(r.id)==='Ready').length;
   return `
   <div class="card">
     <h2 class="sec">Four funnel routes</h2>
-    <p class="sub">Reduced from seven. The three you removed depended on SEO, topic-catalogue browsing and an existing customer base — none of which you have yet.</p>
-    <div class="hint"><b>The routing principle.</b> Cold traffic gets proof before it gets a price. Warm and high-intent traffic goes straight to the product — a lead gate there only adds friction to someone already ready to buy.</div>
+    <p class="sub">A route is one complete path from an ad or visitor to a sale. ${readyCount} of ${ROUTES.length} are marked ready.</p>
+    <div class="hint"><b>What a route is.</b> Each route pairs an audience with a channel, a message, a destination and a way to buy. The job on this page is to build each one and mark it ready — a route is only ready when someone can travel it end to end without hitting a dead end.</div>
+    <div class="hint" style="border-left-color:#93C5FD;background:#F5F9FF;color:#1E3A5F"><b>How each route moves through work.</b> <b>Prepare</b> is everything that must exist first — copy, audiences, tracking. <b>Actual work</b> is building and launching it. <b>Result</b> is what actually happened once traffic ran: the numbers, and what you learned. Record each as you go so a teammate can see exactly where the route stands.</div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">Getting found — SEO, AEO, GEO</h2>
+    <p class="sub">Three ways teachers and schools discover you before they ever click an ad. Each route should say how it will be found.</p>
+    <div class="disc-grid">
+      <div class="disc"><div class="disc-h">SEO<span>Search Engine Optimisation</span></div><div class="disc-b">Ranking in Google's normal blue-link results. Won by useful pages targeting what teachers actually type — "IB Maths AI pacing guide", "AA HL calculus worksheet".</div></div>
+      <div class="disc"><div class="disc-h">AEO<span>Answer Engine Optimisation</span></div><div class="disc-b">Being the answer Google reads aloud or shows in a featured snippet or "People also ask" box. Won by clear, direct answers to specific questions, structured so a machine can lift them.</div></div>
+      <div class="disc"><div class="disc-h">GEO<span>Generative Engine Optimisation</span></div><div class="disc-b">Being cited when a teacher asks ChatGPT, Gemini or Perplexity "what's the best IB Maths curriculum kit". Won by clear, factual, quotable content that AI models trust and repeat.</div></div>
+    </div>
   </div>
 
   <div class="grid2">
-    ${ROUTES.map(r=>`
+    ${ROUTES.map(r=>{
+      const status = routeStatus(r.id);
+      const meta = routeMeta(r.id);
+      return `
       <div class="route">
         <div class="rh" style="background:${r.c}">
           <div class="rid">${r.id}</div>
@@ -1398,14 +1547,34 @@ function viewRoutes(){
           <div class="rrow"><div class="k">Purchase</div><div class="v">${esc(r.buy)}</div></div>
           <div class="rrow"><div class="k">CRM tag</div><div class="v"><code style="background:#F1F4F7;padding:1px 6px;border-radius:4px;font-size:11.5px">${r.tag}</code></div></div>
           <div class="rrow"><div class="k">Success metric</div><div class="v">${esc(r.metric)}</div></div>
-          <div class="rrow"><div class="k">Build status</div><div class="v">
+          <div class="rrow"><div class="k">Status</div><div class="v">
             <select ${canWrite()?'':'disabled'} onchange="setRoute('${r.id}',this.value)">
-              ${['Not started','In progress','Ready'].map(o=>`<option${routeStatus(r.id)===o?' selected':''}>${o}</option>`).join('')}
+              ${['Not started','In progress','Ready'].map(o=>`<option${status===o?' selected':''}>${o}</option>`).join('')}
             </select>
-            ${routeMeta(r.id) ? `<div style="margin-top:4px">${byLine(routeMeta(r.id))}</div>` : ''}
-            </div></div>
+            <button class="rw-toggle" onclick="toggleRouteWork('${r.id}')">Track work ▾</button>
+            ${meta && meta.at ? `<div style="margin-top:4px">${byLine(meta)}</div>` : ''}
+          </div></div>
+
+          <div class="rw" id="rw-${r.id}">
+            ${routeStageField(r.id,'prepare','① Prepare — what must exist first','Copy, audiences, tracking, creative…')}
+            ${routeStageField(r.id,'work','② Actual work — building and launching','What you built and shipped…')}
+            ${routeStageField(r.id,'result','③ Result — what happened once it ran','The numbers, and what you learned…')}
+            <div class="rw-disc">
+              <div class="rw-df"><label>SEO</label><input type="text" placeholder="Search plan for this route" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'seo'))}" oninput="setRouteField('${r.id}','seo',this.value)"></div>
+              <div class="rw-df"><label>AEO</label><input type="text" placeholder="Answer-engine plan" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'aeo'))}" oninput="setRouteField('${r.id}','aeo',this.value)"></div>
+              <div class="rw-df"><label>GEO</label><input type="text" placeholder="AI-citation plan" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'geo'))}" oninput="setRouteField('${r.id}','geo',this.value)"></div>
+            </div>
+            <div class="rw-f">
+              <label>Notes</label>
+              <textarea id="note-route-${r.id}" rows="2" placeholder="Working notes, blockers, questions" ${canWrite()?'':'readonly'}
+                oninput="routeNoteDirty('${r.id}')"
+                onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postRouteNote('${r.id}')">${esc(routeField(r.id,'notes'))}</textarea>
+              ${canWrite()?`<div class="note-act"><button class="btn-post" id="post-route-${r.id}" onclick="postRouteNote('${r.id}')" disabled>Post note</button><span class="note-hint">Cmd/Ctrl + Enter</span></div>`:''}
+            </div>
+          </div>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>
 
   <div class="card">
@@ -1529,14 +1698,54 @@ async function restoreTask(id){
 
 function toggleRemoved(){ showRemoved = !showRemoved; render(); }
 
+function routePayload(id){
+  const c = routeMeta(id) || {};
+  return { status: c.status || 'Not started',
+           prepare:c.prepare||'', work:c.work||'', result:c.result||'', notes:c.notes||'',
+           seo:c.seo||'', aeo:c.aeo||'', geo:c.geo||'' };
+}
+
 function setRoute(id, v){
   if(!guard()){ render(); return; }
-  S.routes[id] = stamp({status:v});
+  const prev = routeMeta(id) || {};
+  S.routes[id] = stamp(Object.assign({}, prev, {status:v}));
   save();
   const r = ROUTES.find(x=>x.id===id);
-  push('route', id, {status:v}, r?`${r.id} ${r.name}`:id, `set ${v.toLowerCase()} on`);
+  push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, `set ${v.toLowerCase()} on`);
   render();
 }
+
+let routeT = {};
+function setRouteField(id, key, v){
+  if(!guard()) return;
+  const prev = routeMeta(id) || {};
+  S.routes[id] = stamp(Object.assign({}, prev, {[key]: v}));
+  save();
+  clearTimeout(routeT[id+key]);
+  routeT[id+key] = setTimeout(()=>{
+    const r = ROUTES.find(x=>x.id===id);
+    push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, null);
+  }, 900);
+}
+
+function postRouteNote(id){
+  if(!guard()) return;
+  const ta = document.getElementById('note-route-'+id);
+  if(!ta) return;
+  const prev = routeMeta(id) || {};
+  S.routes[id] = stamp(Object.assign({}, prev, {notes: ta.value}));
+  save();
+  const r = ROUTES.find(x=>x.id===id);
+  push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, 'updated notes on');
+  toast('Note posted.'); render();
+}
+function routeNoteDirty(id){
+  const btn = document.getElementById('post-route-'+id);
+  const ta = document.getElementById('note-route-'+id);
+  if(!btn || !ta) return;
+  btn.disabled = (ta.value === routeField(id,'notes'));
+}
+function toggleRouteWork(id){ const el=document.getElementById('rw-'+id); if(el) el.classList.toggle('show'); }
 
 /* =====================================================================
    ASSETS
@@ -1558,16 +1767,48 @@ function viewAssets(){
     return `<div class="tgroup">
       <div class="thead"><div class="tt">${esc(c)}</div><div class="tc">${dn}/${items.length} ready</div></div>
       ${items.map(a=>{
-        const st = S.assets[a[0]]||{};
-        return `<div class="task ${st.done?'done':''}">
+        const id = a[0];
+        const st = S.assets[id]||{};
+        const has = (st.note&&st.note.trim())||(st.result&&st.result.trim())||(st.link&&st.link.trim());
+        return `<div class="task ${st.done?'done':''} ${has?'open':''}" id="arow-${id}">
           <input type="checkbox" class="cb" ${st.done?'checked':''} ${canWrite()?'':'disabled'}
-                 onchange="togA('${a[0]}',this.checked)">
+                 onchange="togA('${id}',this.checked)">
           <div class="body">
             <div class="tx">${esc(a[2])}</div>
             <div class="meta">
-              <span style="color:var(--faint)">${a[0]}</span>
+              <span style="color:var(--faint)">${id}</span>
               ${a[3]===1?'<span class="pill crit">Required</span>':'<span class="pill med">Optional</span>'}
+              <button class="notebtn ${has?'has':''}" onclick="toggleAssetNote('${id}')" title="Edit">✎</button>
               ${st.done ? byLine(st) : ''}
+            </div>
+
+            ${(st.result||st.link) ? `<div class="result">
+              ${st.result?`<div class="rrw"><span class="rk">Result</span><span class="rv">${esc(st.result)}</span></div>`:''}
+              ${st.link?`<div class="rrw"><span class="rk">Link</span>${
+                safeUrl(st.link)
+                  ? `<a class="rl" href="${esc(safeUrl(st.link))}" target="_blank" rel="noopener noreferrer">${esc(st.link)}</a>`
+                  : `<span class="rv" style="color:var(--red)">${esc(st.link)} — not a valid web link</span>`
+              }</div>`:''}
+            </div>` : ''}
+
+            <div class="detail">
+              <div class="df">
+                <label>Result — what was produced</label>
+                <textarea class="res-in" rows="2" placeholder="What this asset is, in words" ${canWrite()?'':'readonly'}
+                  oninput="setAssetField('${id}','result',this.value)">${esc(st.result||'')}</textarea>
+              </div>
+              <div class="df">
+                <label>Link — where it lives</label>
+                <input type="url" class="link-in" placeholder="https://…" ${canWrite()?'':'readonly'} value="${esc(st.link||'')}"
+                  oninput="setAssetField('${id}','link',this.value)">
+              </div>
+              <div class="df">
+                <label>Notes</label>
+                <textarea class="note-in" id="note-asset-${id}" rows="2" placeholder="Working notes, blockers, questions" ${canWrite()?'':'readonly'}
+                  oninput="noteDirty('asset','${id}')"
+                  onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postNote('asset','${id}')">${esc(st.note||'')}</textarea>
+                ${canWrite()?`<div class="note-act"><button class="btn-post" id="post-asset-${id}" onclick="postNote('asset','${id}')" disabled>Post note</button><span class="note-hint">Cmd/Ctrl + Enter</span></div>`:''}
+              </div>
             </div>
           </div>
         </div>`;
@@ -1575,14 +1816,32 @@ function viewAssets(){
     </div>`;
   }).join('')}`;
 }
+function assetPayload(id){
+  const c = S.assets[id] || {};
+  return { done:!!c.done, result:c.result||'', link:c.link||'', note:c.note||'' };
+}
 function togA(id,v){
   if(!guard()){ render(); return; }
   S.assets[id] = stamp(Object.assign({}, S.assets[id], {done:v}));
   save();
   const a = ASSETS.find(x=>x[0]===id);
-  push('asset', id, {done:v}, a?a[2]:id, v?'marked ready':'reopened');
+  push('asset', id, assetPayload(id), a?a[2]:id, v?'marked ready':'reopened');
   render();
 }
+let afieldT = {};
+function setAssetField(id, key, v){
+  if(!guard()) return;
+  const prev = S.assets[id] || {};
+  S.assets[id] = stamp(Object.assign({}, prev, {[key]: v}));
+  save();
+  clearTimeout(afieldT[id+key]);
+  afieldT[id+key] = setTimeout(()=>{
+    const a = ASSETS.find(x=>x[0]===id);
+    push('asset', id, assetPayload(id), a?a[2]:id, key==='result'?'recorded a result for':'added a link to');
+    render();
+  }, 900);
+}
+function toggleAssetNote(id){ const el=document.getElementById('arow-'+id); if(el) el.classList.toggle('open'); }
 
 /* =====================================================================
    METRICS
@@ -1738,10 +1997,13 @@ function expJSON(){
    ===================================================================== */
 Object.defineProperty(window, 'S', { get: () => S });
 Object.assign(window, {
-  go, tog, togA, setM, setNote, toggleNote, setRoute, expJSON,
+  go, tog, togA, setM, toggleNote, setRoute, expJSON,
   signIn, signOut, save, render,
   openAdd, cancelAdd, addTask, removeTask, restoreTask, toggleRemoved, toggleGuide,
-  setField
+  setField,
+  noteDirty, postNote, moveTask, moveTaskToDay,
+  setRouteField, postRouteNote, routeNoteDirty, toggleRouteWork,
+  setAssetField, toggleAssetNote
 });
 
 /* =====================================================================
