@@ -183,12 +183,23 @@ select:focus,input:focus,textarea:focus{border-color:var(--blue)}
 .res-in:focus,.link-in:focus,.note-in:focus{border-color:var(--blue);outline:none}
 
 /* ---------- note post button ---------- */
-.note-act{display:flex;align-items:center;gap:9px;margin-top:5px}
+.note-act{display:flex;align-items:center;gap:9px;margin-top:5px;min-height:0}
 .btn-post{background:var(--blue);color:#fff;border:none;padding:5px 13px;border-radius:6px;
   font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .btn-post:hover:not(:disabled){background:#1D4ED8}
 .btn-post:disabled{background:#CBD5E1;cursor:default}
 .note-hint{font-size:10.5px;color:var(--faint)}
+/* Save button and its hint hide until the field is edited, keeping panels calm. */
+.fpost{display:none}
+.fpost.show{display:inline-block}
+.fpost.show + .note-hint{display:inline}
+.note-act:has(.fpost:not(.show)) .note-hint{display:none}
+.fld{width:100%;font-size:12.4px;padding:6px 9px;border:1px solid var(--line);
+  border-radius:6px;font-family:inherit;line-height:1.5}
+textarea.fld{resize:vertical}
+.fld:focus{border-color:var(--blue);outline:none}
+.rw-disc-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:600px){ .rw-disc-3{grid-template-columns:1fr} }
 
 /* ---------- reorder controls ---------- */
 .reorder-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
@@ -1248,29 +1259,9 @@ function taskRowHTML(t){
       ${needsResult ? `<div class="warn">No result recorded. This task is marked done but the answer isn't written down.</div>` : ''}
 
       <div class="detail">
-        <div class="df">
-          <label>Result — what you decided or produced</label>
-          <textarea class="res-in" rows="2" placeholder="The answer itself, in words"
-            ${canWrite()?'':'readonly'}
-            oninput="setField('${t.id}','result',this.value)">${esc(st.result||'')}</textarea>
-        </div>
-        <div class="df">
-          <label>Link — where it lives</label>
-          <input type="url" class="link-in" placeholder="https://…"
-            ${canWrite()?'':'readonly'} value="${esc(st.link||'')}"
-            oninput="setField('${t.id}','link',this.value)">
-        </div>
-        <div class="df">
-          <label>Notes</label>
-          <textarea class="note-in" id="note-task-${t.id}" rows="2" placeholder="Working notes, blockers, questions"
-            ${canWrite()?'':'readonly'}
-            oninput="noteDirty('task','${t.id}')"
-            onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postNote('task','${t.id}')">${esc(st.note||'')}</textarea>
-          ${canWrite()?`<div class="note-act">
-            <button class="btn-post" id="post-task-${t.id}" onclick="postNote('task','${t.id}')" disabled>Post note</button>
-            <span class="note-hint">Cmd/Ctrl + Enter</span>
-          </div>`:''}
-        </div>
+        ${editField('task', t.id, 'result', 'Result — what you decided or produced', {ph:'The answer itself, in words'})}
+        ${editField('task', t.id, 'link', 'Link — where it lives', {multiline:false, ph:'https://…'})}
+        ${editField('task', t.id, 'note', 'Notes', {ph:'Working notes, blockers, questions'})}
         ${canWrite()?`<div class="df reorder">
           <label>Position</label>
           <div class="reorder-row">
@@ -1417,46 +1408,107 @@ function safeUrl(u){
   }catch(e){ return ''; }
 }
 
-let fieldT = {};
-function setField(id, key, v){
-  if(!guard()) return;
-  const prev = S.tasks[id] || {};
-  S.tasks[id] = stamp(Object.assign({}, prev, {[key]: v}));
-  save();
-  clearTimeout(fieldT[id+key]);
-  fieldT[id+key] = setTimeout(()=>{
-    push('task', id, payload(id), taskLabel(id),
-         key==='result' ? 'recorded a result for' : 'added a link to');
-    render();
-  }, 900);
+/* =====================================================================
+   GENERIC MANUAL-SAVE FOR EVERY TEXT FIELD
+   Every editable box — task Result/Link/Notes, asset Result/Link/Notes,
+   route Prepare/Actual work/Result/SEO/AEO/GEO/Notes — uses this one
+   mechanism. Typing only lights the Save button; nothing is stored until
+   Save (or Cmd/Ctrl+Enter) is pressed, so half-typed text is never pushed
+   to everyone else. Any new field added through editField() inherits this
+   automatically.
+
+   scope ∈ 'task' | 'asset' | 'route'
+   ===================================================================== */
+function savedFieldVal(scope, id, key){
+  if(scope==='route') return routeField(id, key);
+  const bucket = (scope==='asset') ? S.assets : S.tasks;
+  return (bucket[id]||{})[key] || '';
+}
+function actionFor(key){
+  if(key==='result') return 'recorded a result for';
+  if(key==='link')   return 'added a link to';
+  if(key==='note' || key==='notes') return 'updated a note on';
+  if(key==='prepare'||key==='work') return 'updated '+key+' on';
+  return 'updated '+key+' on';
 }
 
-/* ---------- notes: manual post, no auto-save ----------
-   Typing only enables the Post button. Nothing is saved until it's clicked,
-   so drafts are never pushed to everyone else mid-sentence. */
-function noteDirty(kind, id){
-  const btn = document.getElementById(`post-${kind}-${id}`);
-  const ta  = document.getElementById(`note-${kind}-${id}`);
-  if(!btn || !ta) return;
-  const saved = ((kind==='asset'?S.assets:S.tasks)[id]||{}).note || '';
-  btn.disabled = (ta.value === saved);
+/* Renders one labelled field with its own Save button. */
+function editField(scope, id, key, label, opts){
+  opts = opts || {};
+  const ml = opts.multiline !== false;               // default: textarea
+  const ph = esc(opts.ph || '');
+  const val = savedFieldVal(scope, id, key);
+  const fid = `f-${scope}-${id}-${key}`;
+  const ro = canWrite() ? '' : 'readonly';
+  const enter = ml
+    ? `onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postField('${scope}','${id}','${key}')"`
+    : `onkeydown="if(event.key==='Enter')postField('${scope}','${id}','${key}')"`;
+  const control = ml
+    ? `<textarea class="fld" id="${fid}" rows="${opts.rows||2}" placeholder="${ph}" ${ro}
+         oninput="fldDirty('${scope}','${id}','${key}')" ${enter}>${esc(val)}</textarea>`
+    : `<input type="text" class="fld" id="${fid}" placeholder="${ph}" value="${esc(val)}" ${ro}
+         oninput="fldDirty('${scope}','${id}','${key}')" ${enter}>`;
+  return `<div class="df">
+    <label>${label}</label>
+    ${control}
+    ${canWrite()?`<div class="note-act">
+      <button class="btn-post fpost" id="post-${fid}" onclick="postField('${scope}','${id}','${key}')" disabled>Save</button>
+      <span class="note-hint">${ml?'Cmd/Ctrl + Enter':'Enter'} to save</span>
+    </div>`:''}
+  </div>`;
 }
-function postNote(kind, id){
+
+/* Typing: only toggles the Save button. Never writes. */
+function fldDirty(scope, id, key){
+  const el  = document.getElementById(`f-${scope}-${id}-${key}`);
+  const btn = document.getElementById(`post-f-${scope}-${id}-${key}`);
+  if(!el || !btn) return;
+  const dirty = el.value !== savedFieldVal(scope, id, key);
+  btn.disabled = !dirty;
+  btn.classList.toggle('show', dirty);
+}
+
+/* Save: writes the one field, pushes it, and clears its button WITHOUT a
+   full re-render — so any other half-typed field on the panel keeps its
+   draft. Summary blocks refresh on the next natural render. */
+function postField(scope, id, key){
   if(!guard()) return;
-  const ta = document.getElementById(`note-${kind}-${id}`);
-  if(!ta) return;
-  const bucket = (kind==='asset') ? S.assets : S.tasks;
-  const prev = bucket[id] || {};
-  bucket[id] = stamp(Object.assign({}, prev, {note: ta.value}));
-  save();
-  if(kind==='asset'){
+  const el = document.getElementById(`f-${scope}-${id}-${key}`);
+  if(!el) return;
+  const v = el.value;
+
+  if(scope==='route'){
+    const prev = routeMeta(id) || {};
+    S.routes[id] = stamp(Object.assign({}, prev, {[key]: v}));
+    save();
+    const r = ROUTES.find(x=>x.id===id);
+    push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, actionFor(key));
+  } else if(scope==='asset'){
+    S.assets[id] = stamp(Object.assign({}, S.assets[id]||{}, {[key]: v}));
+    save();
     const a = ASSETS.find(x=>x[0]===id);
-    push('asset', id, assetPayload(id), a?a[2]:id, 'updated a note on');
+    push('asset', id, assetPayload(id), a?a[2]:id, actionFor(key));
   } else {
-    push('task', id, payload(id), taskLabel(id), 'updated a note on');
+    S.tasks[id] = stamp(Object.assign({}, S.tasks[id]||{}, {[key]: v}));
+    save();
+    push('task', id, payload(id), taskLabel(id), actionFor(key));
   }
-  toast('Note posted.');
-  render();
+
+  const btn = document.getElementById(`post-f-${scope}-${id}-${key}`);
+  if(btn){ btn.disabled = true; btn.classList.remove('show'); }
+
+  // Clear the "no result recorded" flag in place when a result is saved.
+  if(scope==='task'){
+    const row = document.getElementById('row-'+id);
+    if(row){
+      const c = S.tasks[id]||{};
+      const t = TASKS.find(x=>x.id===id) || {};
+      const needs = t.p==='Critical' && c.done && !(c.result && c.result.trim());
+      row.classList.toggle('flag', needs);
+      const w = row.querySelector('.warn'); if(w && !needs) w.style.display='none';
+    }
+  }
+  toast('Saved.');
 }
 
 /* ---------- reorder tasks ---------- */
@@ -1499,14 +1551,6 @@ function moveTaskToDay(id, newDay){
 /* =====================================================================
    ROUTES
    ===================================================================== */
-function routeStageField(id, key, label, ph){
-  return `<div class="rw-f">
-    <label>${label}</label>
-    <textarea rows="2" placeholder="${ph}" ${canWrite()?'':'readonly'}
-      oninput="setRouteField('${id}','${key}',this.value)">${esc(routeField(id,key))}</textarea>
-  </div>`;
-}
-
 function viewRoutes(){
   const readyCount = ROUTES.filter(r=>routeStatus(r.id)==='Ready').length;
   return `
@@ -1556,21 +1600,15 @@ function viewRoutes(){
           </div></div>
 
           <div class="rw" id="rw-${r.id}">
-            ${routeStageField(r.id,'prepare','① Prepare — what must exist first','Copy, audiences, tracking, creative…')}
-            ${routeStageField(r.id,'work','② Actual work — building and launching','What you built and shipped…')}
-            ${routeStageField(r.id,'result','③ Result — what happened once it ran','The numbers, and what you learned…')}
-            <div class="rw-disc">
-              <div class="rw-df"><label>SEO</label><input type="text" placeholder="Search plan for this route" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'seo'))}" oninput="setRouteField('${r.id}','seo',this.value)"></div>
-              <div class="rw-df"><label>AEO</label><input type="text" placeholder="Answer-engine plan" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'aeo'))}" oninput="setRouteField('${r.id}','aeo',this.value)"></div>
-              <div class="rw-df"><label>GEO</label><input type="text" placeholder="AI-citation plan" ${canWrite()?'':'readonly'} value="${esc(routeField(r.id,'geo'))}" oninput="setRouteField('${r.id}','geo',this.value)"></div>
+            ${editField('route', r.id, 'prepare', '① Prepare — what must exist first', {ph:'Copy, audiences, tracking, creative…'})}
+            ${editField('route', r.id, 'work', '② Actual work — building and launching', {ph:'What you built and shipped…'})}
+            ${editField('route', r.id, 'result', '③ Result — what happened once it ran', {ph:'The numbers, and what you learned…'})}
+            <div class="rw-disc-3">
+              ${editField('route', r.id, 'seo', 'SEO', {multiline:false, ph:'Search plan'})}
+              ${editField('route', r.id, 'aeo', 'AEO', {multiline:false, ph:'Answer-engine plan'})}
+              ${editField('route', r.id, 'geo', 'GEO', {multiline:false, ph:'AI-citation plan'})}
             </div>
-            <div class="rw-f">
-              <label>Notes</label>
-              <textarea id="note-route-${r.id}" rows="2" placeholder="Working notes, blockers, questions" ${canWrite()?'':'readonly'}
-                oninput="routeNoteDirty('${r.id}')"
-                onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postRouteNote('${r.id}')">${esc(routeField(r.id,'notes'))}</textarea>
-              ${canWrite()?`<div class="note-act"><button class="btn-post" id="post-route-${r.id}" onclick="postRouteNote('${r.id}')" disabled>Post note</button><span class="note-hint">Cmd/Ctrl + Enter</span></div>`:''}
-            </div>
+            ${editField('route', r.id, 'notes', 'Notes', {ph:'Working notes, blockers, questions'})}
           </div>
         </div>
       </div>`;
@@ -1714,37 +1752,6 @@ function setRoute(id, v){
   push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, `set ${v.toLowerCase()} on`);
   render();
 }
-
-let routeT = {};
-function setRouteField(id, key, v){
-  if(!guard()) return;
-  const prev = routeMeta(id) || {};
-  S.routes[id] = stamp(Object.assign({}, prev, {[key]: v}));
-  save();
-  clearTimeout(routeT[id+key]);
-  routeT[id+key] = setTimeout(()=>{
-    const r = ROUTES.find(x=>x.id===id);
-    push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, null);
-  }, 900);
-}
-
-function postRouteNote(id){
-  if(!guard()) return;
-  const ta = document.getElementById('note-route-'+id);
-  if(!ta) return;
-  const prev = routeMeta(id) || {};
-  S.routes[id] = stamp(Object.assign({}, prev, {notes: ta.value}));
-  save();
-  const r = ROUTES.find(x=>x.id===id);
-  push('route', id, routePayload(id), r?`${r.id} ${r.name}`:id, 'updated notes on');
-  toast('Note posted.'); render();
-}
-function routeNoteDirty(id){
-  const btn = document.getElementById('post-route-'+id);
-  const ta = document.getElementById('note-route-'+id);
-  if(!btn || !ta) return;
-  btn.disabled = (ta.value === routeField(id,'notes'));
-}
 function toggleRouteWork(id){ const el=document.getElementById('rw-'+id); if(el) el.classList.toggle('show'); }
 
 /* =====================================================================
@@ -1792,23 +1799,9 @@ function viewAssets(){
             </div>` : ''}
 
             <div class="detail">
-              <div class="df">
-                <label>Result — what was produced</label>
-                <textarea class="res-in" rows="2" placeholder="What this asset is, in words" ${canWrite()?'':'readonly'}
-                  oninput="setAssetField('${id}','result',this.value)">${esc(st.result||'')}</textarea>
-              </div>
-              <div class="df">
-                <label>Link — where it lives</label>
-                <input type="url" class="link-in" placeholder="https://…" ${canWrite()?'':'readonly'} value="${esc(st.link||'')}"
-                  oninput="setAssetField('${id}','link',this.value)">
-              </div>
-              <div class="df">
-                <label>Notes</label>
-                <textarea class="note-in" id="note-asset-${id}" rows="2" placeholder="Working notes, blockers, questions" ${canWrite()?'':'readonly'}
-                  oninput="noteDirty('asset','${id}')"
-                  onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')postNote('asset','${id}')">${esc(st.note||'')}</textarea>
-                ${canWrite()?`<div class="note-act"><button class="btn-post" id="post-asset-${id}" onclick="postNote('asset','${id}')" disabled>Post note</button><span class="note-hint">Cmd/Ctrl + Enter</span></div>`:''}
-              </div>
+              ${editField('asset', id, 'result', 'Result — what was produced', {ph:'What this asset is, in words'})}
+              ${editField('asset', id, 'link', 'Link — where it lives', {multiline:false, ph:'https://…'})}
+              ${editField('asset', id, 'note', 'Notes', {ph:'Working notes, blockers, questions'})}
             </div>
           </div>
         </div>`;
@@ -1827,19 +1820,6 @@ function togA(id,v){
   const a = ASSETS.find(x=>x[0]===id);
   push('asset', id, assetPayload(id), a?a[2]:id, v?'marked ready':'reopened');
   render();
-}
-let afieldT = {};
-function setAssetField(id, key, v){
-  if(!guard()) return;
-  const prev = S.assets[id] || {};
-  S.assets[id] = stamp(Object.assign({}, prev, {[key]: v}));
-  save();
-  clearTimeout(afieldT[id+key]);
-  afieldT[id+key] = setTimeout(()=>{
-    const a = ASSETS.find(x=>x[0]===id);
-    push('asset', id, assetPayload(id), a?a[2]:id, key==='result'?'recorded a result for':'added a link to');
-    render();
-  }, 900);
 }
 function toggleAssetNote(id){ const el=document.getElementById('arow-'+id); if(el) el.classList.toggle('open'); }
 
@@ -2000,10 +1980,8 @@ Object.assign(window, {
   go, tog, togA, setM, toggleNote, setRoute, expJSON,
   signIn, signOut, save, render,
   openAdd, cancelAdd, addTask, removeTask, restoreTask, toggleRemoved, toggleGuide,
-  setField,
-  noteDirty, postNote, moveTask, moveTaskToDay,
-  setRouteField, postRouteNote, routeNoteDirty, toggleRouteWork,
-  setAssetField, toggleAssetNote
+  fldDirty, postField, moveTask, moveTaskToDay,
+  toggleRouteWork, toggleAssetNote
 });
 
 /* =====================================================================
